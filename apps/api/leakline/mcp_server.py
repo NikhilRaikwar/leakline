@@ -6,7 +6,7 @@ validated parameters via FalkorDB's GRAPH.RO_QUERY.
 """
 import argparse
 import os
-from typing import Literal
+from typing import Annotated, Literal
 import httpx
 from pydantic import BaseModel, ConfigDict, Field
 from mcp.server.fastmcp import FastMCP
@@ -194,7 +194,8 @@ def create_server(run_id: str, investigation_id: str):
     @mcp.tool()
     def query_read(query_template_id: Literal["audit_scope", "cross_split_components", "component_evidence", "duplicate_path"],
                    component_id: str | None = None, source_sample_id: str | None = None,
-                   target_sample_id: str | None = None, cypher: str | None = None) -> QueryOutput:
+                   target_sample_id: str | None = None,
+                   cypher: Annotated[str | None, Field(description="Rejected; use only a fixed query template")] = None) -> QueryOutput:
         """Run one of four fixed read-only graph templates; arbitrary Cypher is not accepted."""
         if cypher is not None:
             raise ValueError("arbitrary_cypher_is_not_supported")

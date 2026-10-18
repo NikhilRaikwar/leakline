@@ -78,6 +78,8 @@ async def _mcp_round_trip(agent_run):
             names = {tool.name for tool in tools.tools}
             assert {"get_schema", "inspect_audit_scope", "list_cross_split_components", "inspect_component_evidence", "query_read"} <= names
             assert "approve_repair_plan" not in names
+            query_read_schema = next(tool.inputSchema for tool in tools.tools if tool.name == "query_read")
+            assert "Rejected" in query_read_schema["properties"]["cypher"]["description"]
             schema = await session.call_tool("get_schema", {})
             assert not schema.isError
             assert "Sample" in str(schema.structuredContent)
@@ -272,6 +274,39 @@ def test_provider_timeout_has_incomplete_state_not_a_decision(agent_run, monkeyp
     anyio.run(investigate, inv, agent_run, lambda _value: None, lambda _value: None)
     assert inv.status == "incomplete" and inv.error_code == "agent_timeout"
     assert inv.decision is None
+
+
+def test_graph_outage_does_not_produce_new_authoritative_agent_decision(agent_run, monkeypatch):
+    from leakline import agent as agent_module
+    monkeypatch.setenv("OPENROUTER_API_KEY", "unit-test-only")
+    monkeypatch.setenv("OPENROUTER_MODEL", "unit/tool-calling-model")
+    monkeypatch.setenv("FALKORDB_HOST", "127.0.0.1")
+    monkeypatch.setenv("FALKORDB_PORT", "1")
+    calls = iter([
+        [{"id": "schema", "type": "function", "function": {"name": "get_schema", "arguments": "{}"}},
+         {"id": "scope", "type": "function", "function": {"name": "inspect_audit_scope", "arguments": "{}"}}],
+        [{"id": "components", "type": "function", "function": {"name": "list_cross_split_components", "arguments": "{}"}}],
+        None,
+    ])
+
+    async def fake_provider(_client, model, messages, tools, timeout):
+        requested = next(calls)
+        message = {"tool_calls": requested} if requested is not None else {
+            "content": json.dumps({"outcome": "no_findings_in_scope", "next_action": "no_repair_in_scope",
+                "summary": "No findings.", "reasons": [], "component_ids": [], "evidence_ids": [],
+                "repair_plan_id": None, "confidence": "partial_scope"})}
+        return __import__("httpx").Response(200, json={"model": model, "choices": [{"message": message}]})
+
+    monkeypatch.setattr(agent_module, "_openrouter_call", fake_provider)
+    inv = Investigation(investigation_id=str(uuid.uuid4()), run_id=agent_run.analysis_id, status="queued",
+        request=InvestigationRequest(goal="Investigate this run's cross-split findings"), model="unit/tool-calling-model")
+    anyio.run(investigate, inv, agent_run, lambda _value: None, lambda _value: None)
+    assert inv.status == "failed"
+    assert inv.error_code in {"structured_decision_invalid", "agent_runtime_failed"}
+    assert inv.decision is None
+    assert any(call.status == "failed" for call in inv.tool_calls)
+    assert not any(call.tool_name == "list_cross_split_components" and call.status == "succeeded"
+                   for call in inv.tool_calls)
 
 
 def test_persisted_queued_trace_recovers_as_interrupted(agent_run):

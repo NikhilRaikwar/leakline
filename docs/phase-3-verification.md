@@ -158,3 +158,55 @@ repair validation, and human approval remain authoritative. Analysis is bounded
 by sampled rows and the existing configured matching thresholds. Public dataset
 availability does not imply redistribution permission; raw samples stay local
 in FalkorDB and are not committed.
+
+## Independent backend audit addendum (2026-10-18)
+
+The current event/rules pages were rechecked and identify the October 15–18
+“Graph Hacks: Context for AI Agents” event and Track 01. The pinned Hugging Face
+dataset card was reviewed at the GoEmotions revision; it identifies Apache-2.0,
+Reddit comments, a simplified multilabel schema and a privacy warning about
+usernames in raw data. Leakline selects the simplified text/labels and stable row
+index and does not ingest username fields; comment text can still be identifying.
+
+An initial full test run on the target commit passed 42 tests against real local
+FalkorDB and public HF. The audit then found that the MCP SDK ignored unknown
+argument fields: a hostile `cypher: "CREATE ..."` request appeared to succeed
+because the fixed read template was executed. No database write occurred, but
+the call was not rejected as required. The MCP tool now explicitly accepts that
+reserved field only to reject it, marks it rejected in the discovered schema,
+and its regression checks both MCP error status and unchanged node count. A new
+mock-provider/real-MCP-subprocess test makes FalkorDB unavailable and confirms
+the agent records failed calls and does not save a new decision. A graph test now
+renumbers WCC-internal IDs and verifies stable canonical component IDs.
+
+The first post-fix targeted MCP attempt failed its new schema assertion; after
+the schema was corrected, the focused MCP/outage tests passed (2 passed), and
+the focused graph/repair suite passed (17 passed). The complete post-fix suite
+then passed: **43 passed, 0 failed, 0 skipped in 410.98s**, with one existing
+Starlette/AnyIO `BlockingPortal` deprecation warning. Frontend typecheck and
+production build both passed.
+
+The first browser replay attempt did not render the investigation because the
+Next production build had captured its default API rewrite port 8000 while the
+API was running on port 8001. This was a test-environment mismatch, not a UI
+change: rebuilding with `API_BASE_URL=http://127.0.0.1:8001` and restarting the
+production server made `scripts/browser_smoke.mjs` pass in Edge 155. It verified
+the persisted conclusion/scope, real MCP trace and unapproved plan.
+
+The API was restarted against the existing local SQLite/FalkorDB state. A fresh
+run/trace read returned the pinned revision, 1,500 rows per split, complete
+investigation, model, 13 MCP calls and the validated plan awaiting human review.
+A real API component read returned two members across train/test, one accepted
+evidence edge and an actual one-hop path. Repeating the independent validator
+returned `verified` with all 17 checks true, 2 quarantined rows and 1 remaining
+train/validation crossing. The original test assignment was preserved and the
+plan remains unapproved. These are real stored GoEmotions records; the synthetic
+fixtures are only used by automated tests.
+
+No live OpenRouter request or new baseline pair was made during this audit. The
+existing sanitized live receipt documents the real
+`deepseek/deepseek-v4.1-flash` investigation, while the baseline is a single
+prior paired run. The run's ten-investigation cap is retained; the quota was
+not reset or bypassed. The committed pytest suite covers mocked provider
+failure/outage behavior, but those tests are not represented as live provider
+proof.

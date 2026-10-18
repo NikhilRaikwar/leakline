@@ -27,6 +27,8 @@ def test_real_wcc_transitive_singleton_and_ignored_candidate(graph):
     samples=[sample("a","A"),sample("b","B"),sample("c","C","test"),sample("d","D")]
     before=copy.deepcopy(samples)
     graph.store(source(),samples,[edge("a","b"),edge("b","c"),edge("c","d","needs_review")])
+    assert graph.query("MATCH (:Sample)-[r:CONFIRMED_DUPLICATE_OF]->(:Sample) RETURN count(r)")==[[2]]
+    assert graph.query("MATCH (:Sample)-[r:POSSIBLY_SIMILAR_TO]->(:Sample) RETURN count(r)")==[[1]]
     components,findings=graph.components(["train"],["test"])
     assert sorted(len(c.sample_ids) for c in components)==[1,3]
     assert findings[0].sample_ids==["a","b","c"]
@@ -34,6 +36,15 @@ def test_real_wcc_transitive_singleton_and_ignored_candidate(graph):
     assert graph.query("MATCH (s:Sample) RETURN count(s)")==[[4]]
     assert graph.query("MATCH (s:Sample {sample_id:'a'}) RETURN s.text,s.split")==[["A","train"]]
     assert samples==before
+    original_query=graph.query
+    def remapped_wcc(query,params=None):
+        rows=original_query(query,params)
+        if query==WCC:
+            component_ids=sorted({row[2] for row in rows},key=str)
+            labels={value:f"rebuild-{index}" for index,value in enumerate(reversed(component_ids))}
+            return [[sample_id,split,labels[component_id]] for sample_id,split,component_id in rows]
+        return rows
+    graph.query=remapped_wcc
     again, findings_again=graph.components(["train"],["test"])
     assert again==components and findings_again==findings
     assert graph.query("MATCH (c:Component) RETURN count(c)")==[[2]]

@@ -1,6 +1,7 @@
 # Leakline — Graph-Native Dataset Integrity Agent
 
-Backend-first public text dataset audit for Graph Hacks Track 01. This checkpoint
+Backend-first public text dataset audit for **Graph Hacks: Context for AI Agents**
+Track 01 — Agents That Act on Connected Data (Oct 15–18, 2026). This checkpoint
 implements deterministic source ingestion, evidence matching and real FalkorDB
 connected components, graph-derived repair planning, independent verification and
 approval-gated artifact downloads. Phase 3 adds a bounded OpenRouter agent with
@@ -95,7 +96,13 @@ The fixed GoEmotions `simplified` audit at commit
 validation and test (4,500 total; seed 42; near threshold .90). It found 7 accepted
 edges in 5 non-singleton components: two train–test groups and one train–validation
 group. This is a partial-scope result, not a statement about the whole dataset.
-The source card lists Apache-2.0; only text-free evidence/provenance is committed.
+The pinned Hugging Face source card lists Apache-2.0 and describes the examples as
+Reddit comments. Its privacy note warns that original usernames in the raw config
+can sometimes identify people. Leakline uses the simplified config's selected
+text/labels and source row index, not usernames or author metadata, but comment
+text itself can still be identifying. Public availability or a card license is
+not blanket permission for every downstream use. Raw text stays in the local
+database; committed receipts and repair artifacts contain no sample text.
 GoEmotions has multilabel class IDs: class counts are marginal per-class counts,
 not the number of unique label combinations. Source usernames are not imported.
 
@@ -141,6 +148,11 @@ limits exist; cancellation, global download budgets and graph retention controls
 remain future work. Similarity is evidence under a policy, not proof of memorization.
 
 See [database queries and matching policy](docs/algorithms.md).
+The backend audit, verified Track 01 mapping, graph architecture and frozen API
+handoff are in [backend readiness](docs/backend-readiness-audit.md),
+[Track 01 compliance](docs/track-01-compliance.md),
+[FalkorDB architecture](docs/falkordb-architecture.md), and
+[frontend integration contract](docs/frontend-integration-contract.md).
 
 ## AI investigations (Phase 3)
 

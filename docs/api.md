@@ -175,6 +175,14 @@ The server does not expose a tool to approve a repair; approval remains the
 existing explicit human API action. All graph reads are run-bound and use a small
 allowlist of parameterized query templates over `GRAPH.RO_QUERY`.
 
+The frozen implemented routes, request/response examples, polling, errors,
+empty/partial states and route-to-screen mapping are recorded in
+[`frontend-integration-contract.md`](frontend-integration-contract.md). No
+authentication or multi-tenant authorization is implemented; keep the app local
+and loopback-bound. A `429 investigation_limit_per_run` is a hard ten-record
+limit: retrieve old traces or start a new audit for a new quota; do not reset or
+bypass it.
+
 The validated live configuration is `OPENROUTER_MODEL=deepseek/deepseek-v4.1-flash`
 with provider tool calling. Credentials stay in the API process; for a root `.env`
 file, start the server from `apps/api` with

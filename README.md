@@ -6,8 +6,9 @@ implements deterministic source ingestion, evidence matching and real FalkorDB
 connected components, graph-derived repair planning, independent verification and
 approval-gated artifact downloads. Phase 3 adds a bounded OpenRouter agent with
 real read-only FalkorDB MCP tools, persisted investigation traces, and evidence-
-gated repair proposals. The web surface remains `/app`; semantic embeddings and
-a full marketing landing page are not implemented.
+gated repair proposals. Phase 4 adds a responsive marketing site and a complete
+local-first product workspace backed by those APIs. Semantic embeddings, hosted
+authentication, and a shared run-history service are not implemented.
 
 ## Run locally
 
@@ -23,7 +24,9 @@ npm ci
 npm run dev
 ```
 
-Visit http://localhost:3000/app. API docs: http://127.0.0.1:8000/docs.
+Visit http://localhost:3000 for the product site or http://localhost:3000/app for
+the workspace. API docs: http://127.0.0.1:8000/docs. The web app proxies `/api/*`
+and `/health/*` to `API_BASE_URL` (default `http://127.0.0.1:8000`).
 FalkorDB uses localhost:6380 and its Browser uses http://localhost:3001.
 Versions are pinned in uv.lock/package-lock.json and the database image digest.
 Optional environment names are in `.env.example`; copy it to the gitignored root
@@ -40,6 +43,24 @@ uv run pytest -v
 npm run typecheck
 npm run build
 ```
+
+## Web experience
+
+The public site at `/` explains the dataset-integrity workflow and reads the
+persisted GoEmotions example from the API when available. It does not substitute
+example counts when the backend is unavailable. `Launch app` opens the workspace.
+
+The workspace includes `/app` (overview and browser-local recent runs), `/app/new`
+(inspect a public Hugging Face revision and configure an audit), and run-scoped
+routes under `/app/runs/{run_id}` for overview, graph, evidence, investigation,
+repair, verification, and exports. A separate `/app/audit-runs` view lists only
+the run IDs saved in the current browser; there is no shared history endpoint.
+Graph membership, evidence, agent traces, plan state, validation, approval, and
+downloads all come from the existing backend contracts. AI investigation is
+started only by the user and requires the server-side OpenRouter configuration.
+See [frontend implementation](docs/frontend-implementation.md),
+[frontend verification](docs/frontend-verification.md), and the
+[frozen API handoff](docs/frontend-integration-contract.md).
 
 Tests require the actual database and public Hugging Face connectivity. They do
 not silently skip unavailable services. Synthetic graph fixtures exist only under

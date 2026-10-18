@@ -24,6 +24,8 @@ def match(samples, threshold=.9):
     lsh = MinHashLSH(threshold=.75, num_perm=128)
     seen = {}
     def add(a, b, method, score, status, reason):
+        if len(edges) >= 100000:
+            raise ValueError("audit_budget_exceeded: too many duplicate pairs")
         a, b = sorted([a.sample_id, b.sample_id])
         pair_id = hashlib.sha256(f"{a}|{b}|strict-v1|{threshold}".encode()).hexdigest()
         edges[(a,b)] = Evidence(pair_id=pair_id, a=a, b=b, method=method, score=score,
@@ -51,6 +53,4 @@ def match(samples, threshold=.9):
                     "Label or negation mismatch" if review else "Verified character-5 shingle Jaccard")
         lsh.insert(sample.sample_id, mh)
         seen[sample.sample_id] = (sample, grams)
-    if len(edges) > 100000:
-        raise ValueError("audit_budget_exceeded: too many duplicate pairs")
     return list(edges.values())

@@ -62,7 +62,8 @@ Metadata is inspected at a resolved commit, then rows are streamed from that exa
 commit with remote dataset code disabled and anonymous access (`token=False`).
 Only public, ungated datasets with actual split counts and string text are supported.
 Per-split seeded index sampling records original row IDs; coverage of unselected
-splits is zero. Streaming may read a large portion of a source to reach selected
+splits is zero. Runs allow at most 5,000 analyzed rows, 100,000 characters per row,
+and 100,000 evidence pairs. Streaming may read a large portion of a source to reach selected
 indices; the row cap bounds analysis size, not network bytes. Large datasets should
 be avoided in this local MVP. Public availability does not grant redistribution rights.
 Raw samples are stored locally in FalkorDB; no public text export is implemented.

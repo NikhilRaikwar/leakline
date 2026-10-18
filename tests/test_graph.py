@@ -34,6 +34,9 @@ def test_real_wcc_transitive_singleton_and_ignored_candidate(graph):
     assert graph.query("MATCH (s:Sample) RETURN count(s)")==[[4]]
     assert graph.query("MATCH (s:Sample {sample_id:'a'}) RETURN s.text,s.split")==[["A","train"]]
     assert samples==before
+    again, findings_again=graph.components(["train"],["test"])
+    assert again==components and findings_again==findings
+    assert graph.query("MATCH (c:Component) RETURN count(c)")==[[2]]
 
 
 def test_clean_no_edges_and_isolation(graph):
@@ -46,3 +49,9 @@ def test_clean_no_edges_and_isolation(graph):
 def test_empty_graph(graph):
     graph.store(source(),[],[])
     assert graph.components(["train"],["test"]) == ([],[])
+
+
+def test_database_outage_has_no_local_algorithm_fallback(monkeypatch):
+    monkeypatch.setenv("FALKORDB_PORT","1")
+    with pytest.raises(Exception):
+        Graph("leakline_unreachable").components(["train"],["test"])

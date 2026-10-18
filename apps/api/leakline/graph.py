@@ -70,10 +70,14 @@ class Graph:
             crosses = bool(set(splits) & set(train) and set(splits) & set(evaluation))
             component = Component(component_key=key,sample_ids=ids,splits=splits,crosses_boundary=crosses)
             components.append(component)
-            self.query("CREATE (c:Component {component_key:$key, size:$size, crosses_boundary:$crosses, algorithm:'algo.wcc'})",
-                       {"key":key,"size":len(ids),"crosses":crosses})
-            self.query("UNWIND $ids AS id MATCH (s:Sample {sample_id:id}), (c:Component {component_key:$key}) MERGE (s)-[:IN_COMPONENT]->(c)",
-                       {"ids":ids,"key":key})
+        for start in range(0,len(components),200):
+            batch = [c.model_dump() for c in components[start:start+200]]
+            self.query("UNWIND $rows AS row MERGE (c:Component {component_key:row.component_key}) "
+                       "SET c.size=size(row.sample_ids), c.crosses_boundary=row.crosses_boundary, c.algorithm='algo.wcc'",
+                       {"rows":batch})
+            self.query("UNWIND $rows AS row UNWIND row.sample_ids AS id "
+                       "MATCH (s:Sample {sample_id:id}), (c:Component {component_key:row.component_key}) "
+                       "MERGE (s)-[:IN_COMPONENT]->(c)", {"rows":batch})
         # Findings are read back from the materialized database, never guessed from text.
         findings = [Component(component_key=k,sample_ids=sorted(ids),splits=sorted(splits),crosses_boundary=True)
                     for k,ids,splits in self.query(FINDINGS)]

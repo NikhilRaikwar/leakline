@@ -1,0 +1,69 @@
+[
+  {
+    "recorded_at": "2026-10-18T06:43:12.522482+00:00",
+    "analysis_id": "1617f08e-2fba-4f62-a4e3-c10a367fc5b0",
+    "source": {
+      "dataset_id": "cornell-movie-review-data/rotten_tomatoes",
+      "revision_sha": "aa13bc287fa6fcab6daf52f0dfb9994269ffea28",
+      "config": "default",
+      "configs": [
+        "default"
+      ],
+      "splits": {
+        "train": 8530,
+        "validation": 1066,
+        "test": 1066
+      },
+      "columns": {
+        "text": "Value(dtype='string', id=None)",
+        "label": "ClassLabel(names=['neg', 'pos'], id=None)"
+      },
+      "license": "['unknown']"
+    },
+    "coverage": {
+      "train": 0.023446658851113716,
+      "validation": 0.0,
+      "test": 0.18761726078799248
+    },
+    "analyzed_samples": 400,
+    "accepted_edges": 0,
+    "review_edges": 0,
+    "component_count": 400,
+    "finding_count": 0,
+    "graph_name": "leakline_1617f08e2fba4f62a4e3c10a367fc5b0"
+  },
+  {
+    "recorded_at": "2026-10-18T06:44:20.947081+00:00",
+    "analysis_id": "7a2033a8-bf0a-4732-87ab-aa9186814c18",
+    "source": {
+      "dataset_id": "stanfordnlp/sst2",
+      "revision_sha": "8d51e7e4887a4caaa95b3fbebbf53c0490b58bbb",
+      "config": "default",
+      "configs": [
+        "default"
+      ],
+      "splits": {
+        "train": 67349,
+        "validation": 872,
+        "test": 1821
+      },
+      "columns": {
+        "idx": "Value(dtype='int32', id=None)",
+        "sentence": "Value(dtype='string', id=None)",
+        "label": "ClassLabel(names=['negative', 'positive'], id=None)"
+      },
+      "license": "['unknown']"
+    },
+    "coverage": {
+      "train": 0.0029696060817532553,
+      "validation": 0.0,
+      "test": 0.10982976386600769
+    },
+    "analyzed_samples": 400,
+    "accepted_edges": 1,
+    "review_edges": 0,
+    "component_count": 399,
+    "finding_count": 0,
+    "graph_name": "leakline_7a2033a8bf0a473287abaa9186814c18"
+  }
+]

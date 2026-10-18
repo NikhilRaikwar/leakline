@@ -42,15 +42,19 @@ def inspect(req: InspectRequest) -> Source:
     if not splits or any(v <= 0 for v in splits.values()):
         raise ValueError("no_supported_split_metadata")
     card = info.card_data.to_dict() if info.card_data else {}
+    license_value = card.get("license", "unknown")
+    license_text = ", ".join(license_value) if isinstance(license_value, list) else str(license_value)
     return Source(dataset_id=name, revision_sha=sha, config=config, configs=configs,
                   splits=splits, columns={k: str(v) for k, v in builder.info.features.items()},
-                  license=str(card.get("license", "unknown")))
+                  license=license_text)
 
 
 def ingest(req: AuditRequest, source: Source) -> list[Sample]:
     selected = list(dict.fromkeys(req.train_splits + req.evaluation_splits))
     if not set(selected) <= source.splits.keys():
         raise ValueError("no_supported_splits")
+    if sum(min(source.splits[s], req.limit_per_split) for s in selected) > 5000:
+        raise ValueError("audit_budget_exceeded: maximum 5000 total rows")
     if req.text_column not in source.columns or (req.label_column and req.label_column not in source.columns):
         raise ValueError("unsupported_column")
     samples = []
@@ -67,6 +71,8 @@ def ingest(req: AuditRequest, source: Source) -> list[Sample]:
                 text = row.get(req.text_column)
                 if not isinstance(text, str) or not text.strip():
                     raise ValueError("unsupported_column: nonempty strings required")
+                if len(text) > 100000:
+                    raise ValueError("audit_budget_exceeded: maximum 100000 characters per row")
                 identity = json.dumps([source.dataset_id, source.revision_sha, source.config, split, i])
                 samples.append(Sample(sample_id=digest(identity), split=split, row_index=i, text=text,
                                       label=str(row[req.label_column]) if req.label_column else None,

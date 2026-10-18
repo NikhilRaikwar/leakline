@@ -20,4 +20,4 @@ Synthetic integration fixtures demonstrate multi-hop and failure behavior only; 
 
 ## Event deliverables
 
-README and source describe local setup, graph model, WCC Cypher and AI assistant use. The repository is public at [NikhilRaikwar/leakline](https://github.com/NikhilRaikwar/leakline). This audit did not verify a public live deployment, a rendered working demo video, or that an event submission was actually filed. These remain submission checklist items; local setup is the available execution path.
+README and source describe local setup, graph model, WCC Cypher and AI assistant use. The repository is public at [NikhilRaikwar/leakline](https://github.com/NikhilRaikwar/leakline). A demo video link has been supplied: [https://youtu.be/eKGpzpyLiGk](https://youtu.be/eKGpzpyLiGk); playback, visibility, and that it demonstrates the current build still need a human check. This audit did not verify a public live deployment or that an event submission was actually filed. Local setup is the available execution path.

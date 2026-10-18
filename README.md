@@ -7,7 +7,7 @@ FalkorDB is the decision layer: confirmed duplicate edges form graph components,
 
 ![Leakline landing page and audit workspace](docs/screenshots/ui-refresh-desktop-viewport.png)
 
-> **Demo video:** not published yet. A working demo video is required for the submission; see the [submission checklist](docs/track-01-compliance.md). No placeholder or unverified video link is shown here.
+> **Demo video:** [Watch the Leakline demo](https://youtu.be/eKGpzpyLiGk).
 
 ## Try it locally
 
@@ -95,8 +95,8 @@ Python tests need FalkorDB and public Hugging Face connectivity. The production 
 ## Submission and project notes
 
 - **Track:** Track 01 — Agents That Act on Connected Data.
-- **Working demo video:** pending; a required submission deliverable.
+- **Working demo video:** [https://youtu.be/eKGpzpyLiGk](https://youtu.be/eKGpzpyLiGk) (link provided for the submission; playback/accessibility has not been independently verified).
 - **Public deployment:** local setup is documented; a public deployment has not been verified.
 - **AI assistance:** implementation and tests were created with OpenAI Codex assistance. The participant should review and understand the submitted code.
 
-The [Track 01 checklist](docs/track-01-compliance.md) records the event criteria and open deliverables. More engineering detail lives in [API contracts](docs/api.md), [backend readiness](docs/backend-readiness-audit.md), [frontend integration](docs/frontend-integration-contract.md), and the [UI refresh verification](docs/ui-refresh-verification.md).
+The project is released under the [MIT License](LICENSE). The [Track 01 checklist](docs/track-01-compliance.md) records the event criteria and open deliverables. More engineering detail lives in [API contracts](docs/api.md), [backend readiness](docs/backend-readiness-audit.md), [frontend integration](docs/frontend-integration-contract.md), and the [UI refresh verification](docs/ui-refresh-verification.md).

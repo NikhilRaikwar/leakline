@@ -47,6 +47,13 @@ text equivalents; the member table is an accessible alternative to the graph.
 FAQ items use native `details` elements. Motion is limited to section reveals and
 accepted graph-edge drawing, and respects `prefers-reduced-motion`.
 
+The readability refinement keeps workspace screens focused on the next decision:
+dataset setup explains which real source details will load, while AI investigation
+leads with graph-derived group counts, inspected-row coverage, and the recommended
+review action. The model's full explanation, component/evidence IDs, and complete
+tool-call payloads remain available in expandable sections for judges and auditors.
+At narrow widths, those summaries and coverage figures stack into one column.
+
 ## Local use and limits
 
 Run the API, FalkorDB, and web app as described in the README. The web proxy reads

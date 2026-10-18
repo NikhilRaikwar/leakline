@@ -1,0 +1,285 @@
+{
+  "run_id": "300f5981-b6f2-4c01-b3e8-8b772063b455",
+  "investigation_id": "ee747d1e-8b13-44d5-a9df-f6b80f079d7b",
+  "provider": "openrouter",
+  "model": "deepseek/deepseek-v4.1-flash",
+  "status": "complete",
+  "mcp_server": "Leakline-FalkorDB-ReadOnly/1.26.0",
+  "mcp_protocol_version": "2025-11-25",
+  "tools_discovered": [
+    "explain",
+    "get_repair_options",
+    "get_schema",
+    "get_verification_receipt",
+    "inspect_audit_scope",
+    "inspect_component_evidence",
+    "list_cross_split_components",
+    "propose_repair_plan",
+    "query_read",
+    "trace_duplicate_path",
+    "validate_repair_plan"
+  ],
+  "tool_invocations": [
+    {
+      "name": "get_schema",
+      "status": "succeeded",
+      "query_template_id": "schema_inventory",
+      "elapsed_ms": 2129,
+      "result_summary": "{\"labels\":[\"AnalysisRun\",\"Component\",\"DatasetRevision\",\"PairEvidence\",\"RepairPlan\",\"Sample\",\"Split\"],\"property_keys\":[\"algorithm\",\"analysis_id\",\"analyzed_count\",\"approved_at\",\"component_key\",\"config\",\"created_at\",\"crosses_boundary\",\"dataset_id\",\"label\",\"license\",\"manifest_sha256\",\"method\",\"name\",\"pair_id\",\"plan_id\",\"policy\",\"raw_hash\",\"reason\",\"revision_sha\",\"row_index\",\"sample_id\",\"score\",\"size\",\"split\",\"status\",\"text\",\"text_hash\",\"threshold\",\"total_count\",\"version\"],\"query_mode\":\"FalkorDB GRAPH.RO_QUERY\",\"relationship_types\":[\"AFFECTS\",\"CONCERNS\",\"CONFIRMED_DUPLICATE_OF\",\"CONTAINS\",\"HAS_PAIR_EVIDENCE\",\"HAS_SPLIT\",\"IN_COMPONENT\",\"PROPOSES\"]}"
+    },
+    {
+      "name": "inspect_audit_scope",
+      "status": "succeeded",
+      "query_template_id": "audit_scope",
+      "elapsed_ms": 2114,
+      "result_summary": "dataset=google-research-datasets/go_emotions@add492243ff905527e67aeb8b80c082af02207c3; rows=4500; partial=True"
+    },
+    {
+      "name": "list_cross_split_components",
+      "status": "succeeded",
+      "query_template_id": "cross_split_components",
+      "elapsed_ms": 2127,
+      "result_summary": "3 cross-split WCC component(s); truncated=False"
+    },
+    {
+      "name": "inspect_component_evidence",
+      "status": "succeeded",
+      "query_template_id": "component_evidence",
+      "elapsed_ms": 2090,
+      "result_summary": "component=c45dcb0a4a2954adf0cfd5e8bf6685bca1ed88395464176ca182844989fc6bfd; members=2; accepted edges=1; raw text omitted"
+    },
+    {
+      "name": "inspect_component_evidence",
+      "status": "succeeded",
+      "query_template_id": "component_evidence",
+      "elapsed_ms": 2097,
+      "result_summary": "component=e3d80046e709acec947092d55e2c8c2b69166355fbe37c8913e03012c1b6b225; members=2; accepted edges=1; raw text omitted"
+    },
+    {
+      "name": "inspect_component_evidence",
+      "status": "succeeded",
+      "query_template_id": "component_evidence",
+      "elapsed_ms": 2082,
+      "result_summary": "component=e50ddfa103c9ba06770dc2b71abfe23ac39f75e3230ffd9fa073bbe1f7910342; members=3; accepted edges=3; raw text omitted"
+    },
+    {
+      "name": "trace_duplicate_path",
+      "status": "succeeded",
+      "query_template_id": "duplicate_path",
+      "elapsed_ms": 2078,
+      "result_summary": "confirmed path found=True; hops=1"
+    },
+    {
+      "name": "trace_duplicate_path",
+      "status": "succeeded",
+      "query_template_id": "duplicate_path",
+      "elapsed_ms": 2074,
+      "result_summary": "confirmed path found=True; hops=1"
+    },
+    {
+      "name": "trace_duplicate_path",
+      "status": "succeeded",
+      "query_template_id": "duplicate_path",
+      "elapsed_ms": 2066,
+      "result_summary": "confirmed path found=True; hops=1"
+    },
+    {
+      "name": "get_repair_options",
+      "status": "succeeded",
+      "query_template_id": "cross_split_components",
+      "elapsed_ms": 2115,
+      "result_summary": "{\"coverage_limit\":\"Partial scope: {'train': 1500, 'validation': 1500, 'test': 1500}; source sizes: {'train': 43410, 'validation': 5426, 'test': 5427}.\",\"eligible\":true,\"findings_truncated\":false,\"policies\":[\"preserve_test\",\"alternative_split\"],\"rationale\":\"Confirmed train/test WCC components justify preserving test and quarantining their non-test rows.\",\"recommended_policy\":\"preserve_test\",\"train_test_components\":2,\"train_validation_components\":1,\"validation_test_components\":0}"
+    },
+    {
+      "name": "propose_repair_plan",
+      "status": "succeeded",
+      "query_template_id": "repair_plan_proposal",
+      "elapsed_ms": 7381,
+      "result_summary": "plan=c8361336-bec0-46d9-a448-aee4a4ad8bd0; status=draft; quarantined=2; approval remains human-controlled"
+    },
+    {
+      "name": "validate_repair_plan",
+      "status": "succeeded",
+      "query_template_id": "independent_repair_verification",
+      "elapsed_ms": 7624,
+      "result_summary": "verification=verified; plan=validated; remaining overlaps=1"
+    },
+    {
+      "name": "get_verification_receipt",
+      "status": "succeeded",
+      "query_template_id": "repair_verification_receipt",
+      "elapsed_ms": 552,
+      "result_summary": "persisted plan=validated; verification=verified; approval=awaiting_human_review"
+    }
+  ],
+  "decision": {
+    "outcome": "cross_split_findings",
+    "next_action": "review_repair_plan",
+    "summary": "Three confirmed exact_sha256 (score 1.0, threshold 1.0) cross-split WCC components exist in the analyzed 4,500-row scope: two are train/test (c45dcb0a.., e3d80046..) and one is train/validation (e50ddfa1.., 3 members incl. a train-train pair). get_repair_options returned eligible=true, recommended_policy=preserve_test (2 train/test, 1 train/validation). A deterministic preserve_test draft (plan c8361336-bec0-46d9-a448-aee4a4ad8bd0) was created and independently validated: plan_status=validated, verification_status=verified, all checks true, excluded_rows=2, moved_rows=0, awaiting human approval (not approved). It leaves remaining_cross_split_components=1, the train/validation component, since preserve_test quarantines only non-test rows of train/test pairs and does not repair train/validation-only overlaps. Coverage is partial (train 1500/43410, test 1500/5427, validation 1500/5426); MinHash can miss candidates, so no full-dataset cleanliness is claimed.",
+    "scope_statement": "Checked source revision add492243ff905527e67aeb8b80c082af02207c3; inspected coverage: train: 1500/43410 rows (3.46%), validation: 1500/5426 rows (27.64%), test: 1500/5427 rows (27.64%). Observed 3 crossing component(s): 2 train/test, 1 train/validation, 0 validation/test. Policy A preserves test and addresses test-overlapping rows; it does not automatically resolve the remaining train/validation overlap. The proposal remains unapproved and requires human review. This conclusion covers accepted duplicate evidence in the analyzed scope. MinHash can miss candidates; it does not establish absence of every form of leakage or memorization.",
+    "reasons": [
+      "Two train/test components confirmed by exact_sha256 pair evidence (c7d8c333.., 56ebce8f..) with verified duplicate paths.",
+      "One train/validation component (e50ddfa1..) confirmed by pairs 442e8e51.., a64c3421.., c56601ad..; preserve_test does not repair it, so 1 cross-split component remains.",
+      "recommended_policy=preserve_test was applied; plan c8361336-bec0-46d9-a448-aee4a4ad8bd0 validated (verified), excluded_rows=2, moved_rows=0.",
+      "Plan is draft/awaiting_human_review; approval is a human action and was not performed.",
+      "Coverage is partial and MinHash/undetected-duplicate risk means results are bounded to analyzed rows, not full-dataset cleanliness."
+    ],
+    "component_ids": [
+      "c45dcb0a4a2954adf0cfd5e8bf6685bca1ed88395464176ca182844989fc6bfd",
+      "e3d80046e709acec947092d55e2c8c2b69166355fbe37c8913e03012c1b6b225",
+      "e50ddfa103c9ba06770dc2b71abfe23ac39f75e3230ffd9fa073bbe1f7910342"
+    ],
+    "evidence_ids": [
+      "442e8e518b75eb02e331935d5e901304dd9a3d708bb2e2e19b62210a96d860ce",
+      "56ebce8f4fafebf4f2f909a37cf0d9737ec97a5514b93a594dbcdd3f2b13510f",
+      "a64c3421c648a6f96b5e688e106347cbc6f9401ccd6570b2fd3b56944ef6a4e4",
+      "c56601ad58610516c4fa217d2c9659e46385859dafc9d5da5d7a58049921c493",
+      "c7d8c333de8cc4dae89c60747984c276c6ed073624a86c4efadb8e076c08a944"
+    ],
+    "repair_plan_id": "c8361336-bec0-46d9-a448-aee4a4ad8bd0",
+    "confidence": "partial_scope"
+  },
+  "repair_plan_id": "c8361336-bec0-46d9-a448-aee4a4ad8bd0",
+  "repair_plan_status": "validated",
+  "approval_state": "awaiting_human_review",
+  "model_calls": [
+    {
+      "step": 1,
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "InferenceNet",
+      "status": "succeeded",
+      "started_at": "2026-10-18T09:58:37.936166+00:00",
+      "elapsed_ms": 2376,
+      "retry_count": 0,
+      "prompt_tokens": 1689,
+      "completion_tokens": 99,
+      "total_tokens": 1788,
+      "cost_usd": 8.6672e-05,
+      "requested_tools": [
+        "get_schema",
+        "inspect_audit_scope",
+        "list_cross_split_components"
+      ],
+      "error_code": null
+    },
+    {
+      "step": 2,
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "DigitalOcean",
+      "status": "succeeded",
+      "started_at": "2026-10-18T09:58:46.796955+00:00",
+      "elapsed_ms": 2417,
+      "retry_count": 0,
+      "prompt_tokens": 2672,
+      "completion_tokens": 260,
+      "total_tokens": 2932,
+      "cost_usd": 0.000409344,
+      "requested_tools": [
+        "inspect_component_evidence",
+        "inspect_component_evidence",
+        "inspect_component_evidence"
+      ],
+      "error_code": null
+    },
+    {
+      "step": 3,
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "InferenceNet",
+      "status": "succeeded",
+      "started_at": "2026-10-18T09:58:57.397387+00:00",
+      "elapsed_ms": 4259,
+      "retry_count": 0,
+      "prompt_tokens": 4267,
+      "completion_tokens": 510,
+      "total_tokens": 4777,
+      "cost_usd": 0.000646071,
+      "requested_tools": [
+        "trace_duplicate_path",
+        "trace_duplicate_path",
+        "trace_duplicate_path",
+        "get_repair_options"
+      ],
+      "error_code": null
+    },
+    {
+      "step": 4,
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "InferenceNet",
+      "status": "succeeded",
+      "started_at": "2026-10-18T09:59:07.916337+00:00",
+      "elapsed_ms": 2101,
+      "retry_count": 0,
+      "prompt_tokens": 5487,
+      "completion_tokens": 182,
+      "total_tokens": 5669,
+      "cost_usd": 0.000294011,
+      "requested_tools": [
+        "propose_repair_plan"
+      ],
+      "error_code": null
+    },
+    {
+      "step": 5,
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "InferenceNet",
+      "status": "succeeded",
+      "started_at": "2026-10-18T09:59:17.427725+00:00",
+      "elapsed_ms": 2088,
+      "retry_count": 0,
+      "prompt_tokens": 5831,
+      "completion_tokens": 156,
+      "total_tokens": 5987,
+      "cost_usd": 0.000201413,
+      "requested_tools": [
+        "validate_repair_plan"
+      ],
+      "error_code": null
+    },
+    {
+      "step": 6,
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "DigitalOcean",
+      "status": "succeeded",
+      "started_at": "2026-10-18T09:59:27.215029+00:00",
+      "elapsed_ms": 2106,
+      "retry_count": 0,
+      "prompt_tokens": 5985,
+      "completion_tokens": 124,
+      "total_tokens": 6109,
+      "cost_usd": 0.000779955,
+      "requested_tools": [
+        "get_verification_receipt"
+      ],
+      "error_code": null
+    },
+    {
+      "step": 7,
+      "model": "deepseek/deepseek-v4.1-flash",
+      "provider": "DigitalOcean",
+      "status": "succeeded",
+      "started_at": "2026-10-18T09:59:33.606266+00:00",
+      "elapsed_ms": 5797,
+      "retry_count": 0,
+      "prompt_tokens": 6348,
+      "completion_tokens": 1108,
+      "total_tokens": 7456,
+      "cost_usd": 0.000989268,
+      "requested_tools": [],
+      "error_code": null
+    }
+  ],
+  "tokens": 34718,
+  "cost_usd": 0.003406734,
+  "elapsed_seconds": 63.266,
+  "source_revision": "add492243ff905527e67aeb8b80c082af02207c3",
+  "inspected_counts": {
+    "train": 1500,
+    "validation": 1500,
+    "test": 1500
+  },
+  "source_split_sizes": {
+    "train": 43410,
+    "validation": 5426,
+    "test": 5427
+  }
+}

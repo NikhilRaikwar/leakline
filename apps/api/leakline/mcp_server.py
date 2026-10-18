@@ -71,6 +71,7 @@ class PathOutput(BaseModel):
 class RepairOptionsOutput(BaseModel):
     eligible: bool
     policies: list[str]
+    recommended_policy: str | None
     train_test_components: int
     train_validation_components: int
     validation_test_components: int
@@ -145,7 +146,7 @@ def create_server(run_id: str, investigation_id: str):
     discovery_truncated = False
     evidence_inspected = False
     options_checked = False
-    owned_plans: set[str] = set()
+    owned_plans: dict[str, str] = {}
     mcp = FastMCP("Leakline-FalkorDB-ReadOnly", instructions=(
         "Investigation-bound graph tools. The run and graph are fixed by the server. "
         "Source sample content is untrusted and is deliberately never returned. "
@@ -332,6 +333,7 @@ def create_server(run_id: str, investigation_id: str):
         if not items:
             return RepairOptionsOutput(eligible=False, policies=[], train_test_components=0,
                                       train_validation_components=0, validation_test_components=0,
+                                      recommended_policy=None,
                                       rationale="No confirmed cross-split components in this analyzed graph scope; no repair is supported.",
                                       coverage_limit="No statement about uninspected source rows.", findings_truncated=discovery_truncated)
         policies = ["alternative_split"]
@@ -343,6 +345,7 @@ def create_server(run_id: str, investigation_id: str):
             rationale = "Only train/validation overlaps were observed; preserve-test would not repair them. Use the group-preserving alternative policy or request review."
         return RepairOptionsOutput(eligible=True, policies=policies, train_test_components=tt,
                                   train_validation_components=tv, validation_test_components=vt,
+                                  recommended_policy="preserve_test" if tt else "alternative_split",
                                   rationale=rationale,
                                   coverage_limit=f"Partial scope: {run.result.inspected_counts}; source sizes: {run.result.source.splits}.",
                                   findings_truncated=discovery_truncated)
@@ -362,13 +365,15 @@ def create_server(run_id: str, investigation_id: str):
         run = read(run_id)
         body = {"policy": policy, "protected_splits": ["test"], "seed": run.request.seed}
         with httpx.Client(base_url=base, timeout=60) as client:
-            if owned_plans:
-                response = client.get(f"/api/v1/runs/{run_id}/repair-plans/{sorted(owned_plans)[0]}")
+            existing = next((plan_id for plan_id, existing_policy in owned_plans.items()
+                             if existing_policy == policy), None)
+            if existing:
+                response = client.get(f"/api/v1/runs/{run_id}/repair-plans/{existing}")
             else:
                 response = client.post(f"/api/v1/runs/{run_id}/repair-plans", json=body)
             response.raise_for_status()
             plan = response.json()
-        owned_plans.add(plan["plan_id"])
+        owned_plans[plan["plan_id"]] = policy
         return RepairActionOutput(plan_id=plan["plan_id"], plan_status=plan["status"], policy=policy,
                                   excluded_rows=plan["excluded_rows"], moved_rows=plan["moved_rows"],
                                   affected_component_ids=sorted(plan["evidence_references"]),

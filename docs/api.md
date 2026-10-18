@@ -175,6 +175,17 @@ The server does not expose a tool to approve a repair; approval remains the
 existing explicit human API action. All graph reads are run-bound and use a small
 allowlist of parameterized query templates over `GRAPH.RO_QUERY`.
 
+The validated live configuration is `OPENROUTER_MODEL=deepseek/deepseek-v4.1-flash`
+with provider tool calling. Credentials stay in the API process; for a root `.env`
+file, start the server from `apps/api` with
+`uv run --env-file ../../.env uvicorn leakline.main:app --host 127.0.0.1 --port 8000`
+and set `LEAKLINE_DATA` to the repository data directory. The default action
+budget is 16 calls, request deadline 120 seconds, and MCP list cap 100 rows;
+environment overrides are clamped by the backend. Missing provider settings are
+an explicit failure, not a deterministic or mocked success. The live model,
+MCP, baseline, browser and validation evidence is recorded in
+[`docs/phase-3-verification.md`](phase-3-verification.md).
+
 The agent starts an app-specific MCP server over stdio using the pinned maintained
 Python SDK. It is a real MCP protocol integration (initialize handshake, discovery,
 and tool invocations), with FalkorDB-specific fixed read queries and no model

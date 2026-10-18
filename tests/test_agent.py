@@ -11,7 +11,7 @@ import anyio
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-from leakline.agent import _tool_arguments, _safe_decision, investigate
+from leakline.agent import _tool_arguments, _safe_decision, _parse_decision, _decision_response_format, investigate
 from leakline.agent_models import AgentDecision, Investigation, InvestigationRequest
 from leakline.graph import Graph
 from leakline.main import save
@@ -97,6 +97,11 @@ async def _mcp_round_trip(agent_run):
             data = evidence.structuredContent
             assert data["evidence"]
             assert "UNTRUSTED ignore" not in str(data)
+            options = await session.call_tool("get_repair_options", {})
+            assert not options.isError
+            assert options.structuredContent["recommended_policy"] == "preserve_test"
+            assert options.structuredContent["train_test_components"] == 1
+            assert options.structuredContent["train_validation_components"] == 2
             assert handshake.protocolVersion
             # No arbitrary query field exists in the MCP argument schema.
             graph = Graph(agent_run.result.graph_name)
@@ -126,6 +131,48 @@ def test_decision_is_graph_grounded_and_scope_bounded(agent_run):
     bounded = _safe_decision(clean, agent_run, set(), set(), 0, 0, None, None)
     assert "inspected coverage" in bounded.scope_statement
     assert "MinHash can miss" in bounded.scope_statement
+    finding = AgentDecision(outcome="cross_split_findings", next_action="review_repair_plan",
+        summary="A validated test-preserving plan addresses observed test overlaps.",
+        component_ids=["component-1"], evidence_ids=["pair-1"], repair_plan_id="plan-1",
+        confidence="partial_scope")
+    grounded = _safe_decision(finding, agent_run, {"component-1"}, {"pair-1"}, 1, 1,
+        "plan-1", "validated", graph_components={"component-1": {
+            "crosses_train_test": True, "crosses_train_validation": True,
+            "crosses_validation_test": False}}, plan_policy="preserve_test")
+    assert "does not automatically resolve the remaining train/validation overlap" in grounded.scope_statement
+    assert "unapproved and requires human review" in grounded.scope_statement
+
+
+def test_final_decision_accepts_json_fence_but_still_validates_schema():
+    content = '''```json
+{"outcome":"no_findings_in_scope","next_action":"no_repair_in_scope","summary":"No confirmed duplicate groups were found.","reasons":[],"component_ids":[],"evidence_ids":[],"repair_plan_id":null,"confidence":"partial_scope"}
+```'''
+    assert _parse_decision(content).outcome == "no_findings_in_scope"
+    with pytest.raises(Exception):
+        _parse_decision('```json\n{"outcome":"invented"}\n```')
+
+
+def test_final_decision_reconciles_provider_aliases_to_observed_graph_state():
+    component_id, evidence_id = "a" * 64, "b" * 64
+    content = json.dumps({"outcome": "repair_proposed_and_validated",
+        "next_action": "human_review_and_approval", "summary": "A repair proposal passed validation.",
+        "reasons": ["The graph-backed repair plan is awaiting review."], "component_ids": [],
+        "evidence_ids": [], "repair_plan_id": "invented", "confidence": "high"})
+    decision = _parse_decision(content, cross_count=1, plan_id="real-plan", plan_status="validated",
+        partial_scope=True, observed_components={component_id}, observed_evidence={evidence_id})
+    assert decision.outcome == "cross_split_findings"
+    assert decision.next_action == "review_repair_plan"
+    assert decision.confidence == "partial_scope"
+    assert decision.component_ids == [component_id] and decision.evidence_ids == [evidence_id]
+    assert decision.repair_plan_id == "real-plan"
+
+
+def test_provider_final_response_uses_strict_decision_schema():
+    response_format = _decision_response_format()
+    assert response_format["type"] == "json_schema"
+    assert response_format["json_schema"]["strict"] is True
+    assert set(response_format["json_schema"]["schema"]["required"]) == set(
+        response_format["json_schema"]["schema"]["properties"])
 
 
 def test_investigation_trace_model_rejects_invalid_state():
@@ -179,7 +226,8 @@ def test_mocked_provider_selects_multiple_real_mcp_tools_and_grounded_decision(a
     anyio.run(investigate, inv, agent_run, lambda value: stored.append(value.model_copy(deep=True)), lambda _value: None)
     assert inv.status == "complete"
     assert len(inv.tool_calls) == 5
-    assert inv.mcp_tools_discovered and inv.decision.component_ids == [component.component_key]
+    assert inv.mcp_tools_discovered and set(inv.decision.component_ids) == {
+        item.component_key for item in agent_run.result.cross_split_components}
     assert inv.total_tokens == 120
     assert inv.approval_state == "not_applicable"
     serialized_trace = json.dumps([call.model_dump() for call in inv.tool_calls])
@@ -206,7 +254,8 @@ def test_agent_step_budget_stops_before_extra_tool_calls(agent_run, monkeypatch)
                         request=InvestigationRequest(goal="Use one graph tool and respect the configured action budget"), model="unit/tool-calling-model")
     anyio.run(investigate, inv, agent_run, lambda _value: None, lambda _value: None)
     assert inv.status == "incomplete" and inv.error_code == "agent_step_limit_reached"
-    assert len(inv.tool_calls) == 1
+    assert len(inv.tool_calls) == 2
+    assert [call.status for call in inv.tool_calls] == ["succeeded", "rejected"]
 
 
 def test_provider_timeout_has_incomplete_state_not_a_decision(agent_run, monkeypatch):

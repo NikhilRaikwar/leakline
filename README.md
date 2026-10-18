@@ -25,10 +25,14 @@ npm run dev
 Visit http://localhost:3000/app. API docs: http://127.0.0.1:8000/docs.
 FalkorDB uses localhost:6380 and its Browser uses http://localhost:3001.
 Versions are pinned in uv.lock/package-lock.json and the database image digest.
-Optional environment names are in `.env.example`; configure shell environment
-or `.env.local` for Next.js. Python does not automatically load `.env` files.
-The deterministic audit and repair engine needs no model API key. AI investigations
-require the server-side OpenRouter settings described below.
+Optional environment names are in `.env.example`; copy it to the gitignored root
+`.env` and set `OPENROUTER_API_KEY` there for AI investigations. Python does not
+automatically load `.env` files: start the API from `apps/api` with
+`uv run --env-file ../../.env uvicorn leakline.main:app --app-dir . --host 127.0.0.1 --port 8000`
+and configure `LEAKLINE_DATA` to the repository-level `data` directory. The
+deterministic audit and repair engine needs no model API key. AI investigations
+use the server-side OpenRouter setting; the verified model and live results are
+listed in the Phase 3 verification record.
 
 ```powershell
 uv run pytest -v
@@ -65,6 +69,24 @@ own randomly named graphs. Live API tests retain their audit graph and local run
 - `GET .../{plan_id}/artifacts/{filename}`: controlled, approval-gated download.
 
 Full contracts, policy semantics and transitions: [API documentation](docs/api.md).
+
+## Graph and agent architecture
+
+Each audit has a server-generated FalkorDB graph. `DatasetRevision` links through
+`HAS_SPLIT` to `Split`, then `CONTAINS` to source-identified `Sample` nodes.
+`PairEvidence` records matching method, threshold, score and decision reason;
+accepted evidence is represented by `CONFIRMED_DUPLICATE_OF`, while review-only
+edges never enter WCC. The server runs the installed FalkorDB algorithm
+`algo.wcc()` on Sample/confirmed-duplicate edges. Python only groups the returned
+component IDs for split-boundary analysis; production has no NetworkX fallback.
+See [the tested Cypher, graph schema and matching rules](docs/algorithms.md).
+
+The AI loop starts a run-bound read-only MCP stdio server (`mcp==1.26.0`),
+discovers typed tools, and lets the OpenRouter model choose among bounded graph
+investigation and deterministic repair-service actions. Graph reads use fixed
+FalkorDB `GRAPH.RO_QUERY` templates. The model cannot submit arbitrary Cypher,
+edit the graph or approve plans. SQLite retains the inspection trace; deterministic
+WCC, repair validation and the human approval step remain authoritative.
 
 ## Real Phase 2 example
 
@@ -138,13 +160,14 @@ with read-only query behavior aligned to the
 
 Use **Investigate with AI** on a completed audit. The default run for a local live
 smoke is the recorded GoEmotions analysis `300f5981-b6f2-4c01-b3e8-8b772063b455`;
-reproduce it first when its local graph is absent. `uv run python
-scripts/live_agent_smoke.py` executes a real provider call and saves a text-free
-receipt. `uv run python scripts/evaluate_agent_baseline.py` runs a tool-free
+reproduce it first when its local graph is absent.
+`uv run --env-file .env --project apps/api python scripts/live_agent_smoke.py`
+executes a real provider call and saves a text-free receipt.
+`uv run --env-file .env --project apps/api python scripts/evaluate_agent_baseline.py` runs a tool-free
 baseline and compares measured completion and graph-tool activity. Both require
 a running API and server-side OpenRouter credentials. See
-[Phase 3 verification](docs/phase-3-verification.md) for executed checks and
-remaining acceptance gaps.
+[Phase 3 verification](docs/phase-3-verification.md) for the real tool trace,
+baseline measurements, commands and remaining limitations.
 
 Investigation routes are documented in [API documentation](docs/api.md).
 Implementation and tests were created with OpenAI Codex assistance.

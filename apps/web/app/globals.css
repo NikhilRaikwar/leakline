@@ -1,0 +1,10 @@
+@import "tailwindcss";
+:root { color: #202a25; background: #fbfaf7; font-family: Arial, sans-serif; }
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: wait; opacity: .6; }
+input,select { background: white; border: 1px solid #d1d7cf; padding: .7rem; border-radius: .3rem; width:100%; }
+button { background: #164b3a; color:white; padding: .8rem 1.2rem; border-radius:.3rem; }
+label { display:block; margin:1rem 0; }
+pre { overflow-wrap:anywhere; white-space:pre-wrap; font-size:12px; }
+:focus-visible { outline: 3px solid #9f631e; outline-offset:3px; }

@@ -153,3 +153,31 @@ inspection errors use 422/502, incomplete audits 409, graph outages 503, quota
 limits 429 and oversized artifacts 413. The local app is not authenticated for
 public hosting. Full ingestion byte/deadline controls and distributed transactions
 against out-of-band database edits are not implemented.
+
+## AI investigations
+
+These routes are available only for completed runs:
+
+- `POST /api/v1/runs/{run_id}/investigations` accepts `{"goal":"..."}` and
+  returns 202 with `investigation_id` and `status: queued`.
+- `GET /api/v1/runs/{run_id}/investigations/{investigation_id}` returns current
+  state, activity, typed conclusion, repair proposal reference and usage totals.
+- `GET .../{investigation_id}/events` returns persisted status and tool events.
+- `GET .../{investigation_id}/trace` returns actual provider calls, validated MCP
+  arguments, text-free bounded evidence previews, result digests, timings, errors
+  and approval state.
+
+Poll the status endpoint while queued/running. Invalid run/investigation pairings
+return 404. Per-run and active queue limits return 429. OpenRouter missing/failure,
+MCP errors, timeouts and step exhaustion produce explicit failed/incomplete
+statuses and never a fabricated decision. Trace summaries exclude dataset text.
+The server does not expose a tool to approve a repair; approval remains the
+existing explicit human API action. All graph reads are run-bound and use a small
+allowlist of parameterized query templates over `GRAPH.RO_QUERY`.
+
+The agent starts an app-specific MCP server over stdio using the pinned maintained
+Python SDK. It is a real MCP protocol integration (initialize handshake, discovery,
+and tool invocations), with FalkorDB-specific fixed read queries and no model
+write tool; it does not shell out to the separate upstream Rust server. References:
+[MCP Python SDK](https://github.com/modelcontextprotocol/python-sdk) and
+[FalkorDB MCP](https://github.com/FalkorDB/falkordb-mcp).

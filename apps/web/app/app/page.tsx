@@ -53,7 +53,7 @@ export default function Audit(){
     }catch(e){setError((e as Error).message);}finally{setBusy(false);}
   }
   return <main className="max-w-4xl mx-auto p-6 md:p-12">
-    <p className="text-sm tracking-widest mb-6">LEAKLINE / PHASE 2</p>
+    <p className="text-sm tracking-widest mb-6">LEAKLINE / PHASE 3</p>
     <h1 className="text-3xl font-semibold mb-3">Audit a public text dataset</h1>
     <p>Real source rows → deterministic evidence → FalkorDB connected components.</p>
     <p className="text-sm mt-3 text-gray-600">Partial coverage can miss duplicates. A clean result applies only to the audited scope. Original datasets remain unchanged.</p>

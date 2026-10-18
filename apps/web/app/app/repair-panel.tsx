@@ -8,6 +8,7 @@ type Validation={status:string;scope:string;reasons:string[];checks:Record<strin
 type Plan={plan_id:string;status:string;manifest_sha256:string;request:{policy:string;seed:number;protected_splits:string[]};target_ratios:Record<string,number>;assignments:Assignment[];warnings:string[];excluded_rows:number;moved_rows:number;before_counts:Record<string,number>;after_counts:Record<string,number>;before_labels:Record<string,Record<string,number>>;after_labels:Record<string,Record<string,number>>;validation:Validation|null};
 type Detail={samples:{sample_id:string;row_index:number;split:string;text:string;label:string|null;text_truncated:boolean}[];evidence:{pair_id:string;a:string;b:string;method:string;score:number;threshold:number;status:string;reason:string}[];path_sample_ids:string[];path_pair_ids:string[];path_note:string;total_samples:number;truncated:boolean};
 type Artifact={filename:string;sha256:string;bytes:number;url:string};
+type Investigation={investigation_id:string;run_id:string;status:string;current_activity:string;model:string;provider:string;events:{event_id:string;kind:string;status:string;summary:string}[];tool_calls:{call_id:string;tool_name:string;arguments:Record<string,unknown>;query_template_id:string|null;status:string;elapsed_ms:number;result_summary:string;result_preview:Record<string,unknown>|null;error_code:string|null}[];decision:{outcome:string;next_action:string;summary:string;scope_statement:string;reasons:string[];component_ids:string[];evidence_ids:string[];repair_plan_id:string|null;confidence:string}|null;repair_plan_id:string|null;repair_plan_status:string|null;approval_state:string;error_code:string|null};
 
 async function request<T>(url:string,body?:unknown):Promise<T>{
   const response=await fetch(url,body!==undefined?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{cache:'no-store'});
@@ -36,7 +37,9 @@ export default function RepairPanel({runId,result}:{runId:string;result:AuditRes
   useEffect(()=>{
     let cancelled=false;
     request<Plan[]>(`${base}/repair-plans`).then(plans=>{if(!cancelled)setPlan(plans[0]??null);}).catch(e=>{if(!cancelled)setError(e.message);});
-    return ()=>{cancelled=true;};
+    const refresh=()=>request<Plan[]>(`${base}/repair-plans`).then(plans=>{if(!cancelled)setPlan(plans[0]??null);}).catch(e=>{if(!cancelled)setError(e.message);});
+    window.addEventListener('leakline-plan-updated',refresh);
+    return ()=>{cancelled=true;window.removeEventListener('leakline-plan-updated',refresh);};
   },[base]);
   async function action(work:()=>Promise<void>){
     setBusy(true);setError('');
@@ -64,6 +67,7 @@ export default function RepairPanel({runId,result}:{runId:string;result:AuditRes
   const protectedNames=protectedSplits.split(',').map(s=>s.trim());
   const eligible=policy==='alternative_split'?crossing.length>0:crossing.some(c=>c.splits.some(s=>protectedNames.includes(s))&&c.splits.some(s=>!protectedNames.includes(s)));
   return <section className="my-8 border border-gray-200 rounded bg-white p-5">
+    <InvestigationPanel runId={runId}/>
     <h2 className="text-xl font-semibold">Evidence and repair</h2>
     <p className="my-2 text-sm break-all">{result.source.dataset_id} · revision {result.source.revision_sha}</p>
     <div className="overflow-x-auto"><table className="w-full text-left text-sm my-4"><caption className="text-left font-semibold">Actual source coverage</caption>
@@ -128,5 +132,46 @@ export default function RepairPanel({runId,result}:{runId:string;result:AuditRes
         <ul className="my-4 space-y-3">{files.map(f=><li key={f.filename}><a className="underline" href={f.url} download>{f.filename}</a><p className="text-xs break-all">{f.bytes} bytes · SHA-256 {f.sha256}</p></li>)}</ul>
       </div>}
     </section>}
+  </section>;
+}
+
+function InvestigationPanel({runId}:{runId:string}){
+  const base=`/api/v1/runs/${runId}/investigations`;
+  const key=`leakline-investigation-${runId}`;
+  const [id,setId]=useState('');
+  const [goal,setGoal]=useState('Investigate confirmed cross-split duplicate components, check the source coverage, and recommend a safe next action.');
+  const [item,setItem]=useState<Investigation|null>(null);
+  const [trace,setTrace]=useState<Record<string,unknown>|null>(null);
+  const [busy,setBusy]=useState(false);
+  const [error,setError]=useState('');
+  useEffect(()=>{const saved=localStorage.getItem(key);if(saved)setId(saved);},[key]);
+  useEffect(()=>{
+    if(!id)return;
+    let stopped=false;
+    let announcedPlan='';
+    const poll=async()=>{try{const next=await request<Investigation>(`${base}/${id}`);if(stopped)return;setItem(next);if(next.repair_plan_id&&announcedPlan!==next.repair_plan_id){announcedPlan=next.repair_plan_id;window.dispatchEvent(new Event('leakline-plan-updated'));}if(['queued','running'].includes(next.status))setTimeout(poll,1800);}catch(e){if(!stopped)setError((e as Error).message);}};
+    poll();return()=>{stopped=true;};
+  },[base,id]);
+  async function start(){setBusy(true);setError('');try{const accepted=await request<{investigation_id:string}>(base,{goal});localStorage.setItem(key,accepted.investigation_id);setItem(null);setTrace(null);setId(accepted.investigation_id);}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
+  async function loadTrace(){try{setTrace(await request<Record<string,unknown>>(`${base}/${id}/trace`));}catch(e){setError((e as Error).message);}}
+  return <section className="my-5 border border-gray-200 rounded bg-[#fbfaf6] p-5" aria-live="polite">
+    <h2 className="text-xl font-semibold">AI Investigation</h2>
+    <p className="text-sm my-2">A bounded OpenRouter agent investigates this run through read-only FalkorDB MCP tools. It cannot approve repairs.</p>
+    <label>Investigation goal<input value={goal} maxLength={1600} onChange={e=>setGoal(e.target.value)}/></label>
+    <button disabled={busy||!goal.trim()} onClick={start}>Investigate with AI</button>
+    {error&&<p role="alert" className="text-red-800 my-3 break-all">{error}</p>}
+    {item&&<div className="my-4">
+      <p><strong>Status:</strong> {item.status} · {item.current_activity}</p>
+      <p className="text-sm">{item.provider} · {item.model} · {item.approval_state}</p>
+      <h3 className="font-semibold mt-4">Tool activity</h3>
+      <ol className="list-decimal pl-6 space-y-2">{item.events.map(e=><li key={e.event_id} className="text-sm">{e.kind} · {e.status} · {e.summary}</li>)}</ol>
+      <h3 className="font-semibold mt-4">MCP calls ({item.tool_calls.length})</h3>
+      {item.tool_calls.map(t=><details className="border-b border-gray-200 py-2" key={t.call_id}><summary>{t.tool_name} · {t.status} · {t.elapsed_ms} ms</summary><p>{t.result_summary}</p><p>Query template: {t.query_template_id??'business-specific tool'}</p><h4 className="font-medium">Validated arguments</h4><pre>{JSON.stringify(t.arguments,null,2)}</pre>{t.result_preview&&<><h4 className="font-medium">Bounded evidence result</h4><pre>{JSON.stringify(t.result_preview,null,2)}</pre></>}{t.error_code&&<p role="alert">{t.error_code}</p>}</details>)}
+      {item.decision&&<section className="mt-4"><h3 className="font-semibold">Conclusion and next action</h3><p>{item.decision.summary}</p><p className="my-2"><strong>Recommended:</strong> {item.decision.next_action} · {item.decision.confidence}</p><p className="text-sm">{item.decision.scope_statement}</p><p className="text-xs break-all">Components: {item.decision.component_ids.join(', ')||'none'} · Evidence: {item.decision.evidence_ids.join(', ')||'none'}</p></section>}
+      {item.repair_plan_id&&<p className="my-2">Repair draft {item.repair_plan_id} · {item.repair_plan_status} · human approval {item.approval_state}</p>}
+      {item.error_code&&<p role="alert">Investigation ended without a verified conclusion: {item.error_code}</p>}
+      <button className="mt-3" onClick={loadTrace}>Show persisted trace</button>
+      {trace&&<details open className="mt-3"><summary>Persisted model and MCP trace</summary><pre>{JSON.stringify(trace,null,2)}</pre></details>}
+    </div>}
   </section>;
 }

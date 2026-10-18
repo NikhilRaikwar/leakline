@@ -1,10 +1,12 @@
-# Leakline — Phase 2
+# Leakline — Graph-Native Dataset Integrity Agent
 
 Backend-first public text dataset audit for Graph Hacks Track 01. This checkpoint
 implements deterministic source ingestion, evidence matching and real FalkorDB
 connected components, graph-derived repair planning, independent verification and
-approval-gated artifact downloads. The web surface remains `/app`. Agent/MCP,
-model evaluation, semantic embeddings and a full landing page are not implemented.
+approval-gated artifact downloads. Phase 3 adds a bounded OpenRouter agent with
+real read-only FalkorDB MCP tools, persisted investigation traces, and evidence-
+gated repair proposals. The web surface remains `/app`; semantic embeddings and
+a full marketing landing page are not implemented.
 
 ## Run locally
 
@@ -25,7 +27,8 @@ FalkorDB uses localhost:6380 and its Browser uses http://localhost:3001.
 Versions are pinned in uv.lock/package-lock.json and the database image digest.
 Optional environment names are in `.env.example`; configure shell environment
 or `.env.local` for Next.js. Python does not automatically load `.env` files.
-No model API key is needed for these deterministic phases.
+The deterministic audit and repair engine needs no model API key. AI investigations
+require the server-side OpenRouter settings described below.
 
 ```powershell
 uv run pytest -v
@@ -116,4 +119,32 @@ limits exist; cancellation, global download budgets and graph retention controls
 remain future work. Similarity is evidence under a policy, not proof of memorization.
 
 See [database queries and matching policy](docs/algorithms.md).
+
+## AI investigations (Phase 3)
+
+Completed runs expose a bounded, server-side OpenRouter tool-calling investigator.
+Set `OPENROUTER_API_KEY`, `OPENROUTER_MODEL` (a tool-calling model), and the
+`AGENT_*` limits from `.env.example`. It launches a run-bound MCP subprocess using
+the pinned Python MCP SDK (`mcp==1.26.0`). Its graph tools execute fixed queries
+through FalkorDB `GRAPH.RO_QUERY`; arbitrary Cypher and approval are unavailable.
+Repair proposals and validation delegate to the existing deterministic API.
+The agent trace is stored in SQLite and contains tool names, validated arguments,
+bounded summaries, digests, evidence references, timings, provider usage and the
+human approval state. Raw sample text is excluded from model context and traces.
+This is a protocol-compatible, app-specific server built on the maintained
+[Model Context Protocol Python SDK](https://github.com/modelcontextprotocol/python-sdk),
+with read-only query behavior aligned to the
+[FalkorDB MCP integration](https://github.com/FalkorDB/falkordb-mcp).
+
+Use **Investigate with AI** on a completed audit. The default run for a local live
+smoke is the recorded GoEmotions analysis `300f5981-b6f2-4c01-b3e8-8b772063b455`;
+reproduce it first when its local graph is absent. `uv run python
+scripts/live_agent_smoke.py` executes a real provider call and saves a text-free
+receipt. `uv run python scripts/evaluate_agent_baseline.py` runs a tool-free
+baseline and compares measured completion and graph-tool activity. Both require
+a running API and server-side OpenRouter credentials. See
+[Phase 3 verification](docs/phase-3-verification.md) for executed checks and
+remaining acceptance gaps.
+
+Investigation routes are documented in [API documentation](docs/api.md).
 Implementation and tests were created with OpenAI Codex assistance.

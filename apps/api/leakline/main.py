@@ -93,7 +93,11 @@ async def lifespan(app):
             run.status = "interrupted"
             run.error = "Worker restarted; submit a new audit"
             save(run)
+    from .agent import recover_investigations
+    recover_investigations(connection)
     yield
+    from .agent import shutdown_agent
+    shutdown_agent()
     executor.shutdown(wait=True)
 
 
@@ -123,6 +127,9 @@ def inspect_source(req: InspectRequest):
 
 @app.post("/api/v1/runs",response_model=Run,status_code=202)
 def start(req: AuditRequest):
+    global executor
+    if executor._shutdown:
+        executor = ThreadPoolExecutor(max_workers=2)
     try:
         dataset_id(req.dataset)
     except ValueError:
@@ -152,3 +159,5 @@ def findings(run_id: str):
 
 from .repair_api import install
 install(app,read,connection)
+from .agent import install as install_agent
+install_agent(app,read,connection)

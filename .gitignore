@@ -7,3 +7,5 @@ data/
 .env
 *.tsbuildinfo
 .playwright-mcp/
+temp/
+design-plans/

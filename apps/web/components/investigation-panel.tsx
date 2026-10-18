@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { api, type Investigation, type Run } from '../lib/api';
+import { api, type Investigation, type RepairPlan, type Run } from '../lib/api';
 import { PageError, StatusPill } from './ui';
 
 const savedDemo = { run: '300f5981-b6f2-4c01-b3e8-8b772063b455', investigation: 'ee747d1e-8b13-44d5-a9df-f6b80f079d7b' };
@@ -50,6 +50,19 @@ export default function InvestigationPanel({ run }: { run: Run }) {
   const [investigation, setInvestigation] = useState<Investigation | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
+  const [referencedPlan, setReferencedPlan] = useState<RepairPlan | null>(null);
+  const [planReadError, setPlanReadError] = useState(false);
+  const referencedPlanId = investigation?.decision?.repair_plan_id;
+
+  useEffect(() => {
+    setReferencedPlan(null); setPlanReadError(false);
+    if (!referencedPlanId) return;
+    const controller = new AbortController();
+    api<RepairPlan>(`/api/v1/runs/${encodeURIComponent(runId)}/repair-plans/${encodeURIComponent(referencedPlanId)}`, undefined, controller.signal)
+      .then(setReferencedPlan)
+      .catch(reason => { if (!controller.signal.aborted) setPlanReadError(true); });
+    return () => controller.abort();
+  }, [runId, referencedPlanId, investigation?.repair_plan_status]);
 
   useEffect(() => {
     const local = localStorage.getItem(storageKey);
@@ -122,6 +135,7 @@ export default function InvestigationPanel({ run }: { run: Run }) {
           </div>
           {coverage.length > 0 && <div className="coverage-chips" aria-label="Inspected source coverage">{coverage.map(row => <span key={row.split}><strong>{row.split}</strong>{row.inspected.toLocaleString()} / {(row.total ?? 0).toLocaleString()} <small>{row.percent.toFixed(1)}%</small></span>)}</div>}
           <div className="decision-next"><div><span className="eyebrow">Recommended next step</span><strong>{actionLabel(decision.next_action)}</strong>{decision.repair_plan_id && <p>Plan {prettyState(investigation.repair_plan_status)} · approval {prettyState(investigation.approval_state)}. The agent did not approve it.</p>}</div><Link className="btn-secondary" href={`/app/runs/${encodeURIComponent(runId)}/${decision.repair_plan_id ? 'repair' : 'graph'}`}>{decision.repair_plan_id ? 'Review plan' : 'Inspect evidence'} <span aria-hidden="true">→</span></Link></div>
+          {referencedPlanId && <div className="policy-scope-note" aria-live="polite"><strong>What this proposal covers</strong>{referencedPlan ? <><p>{referencedPlan.request.policy === 'preserve_test' ? `Protected splits: ${referencedPlan.request.protected_splits.join(', ')}. ${referencedPlan.excluded_rows.toLocaleString()} rows are quarantined in the proposed manifest. Other split boundaries are not automatically repaired.` : 'This is an alternative grouped experiment, not an official benchmark replacement.'}</p><p>{referencedPlan.validation ? `Latest independent check: ${referencedPlan.validation.status.replaceAll('_', ' ')}. Other cross-split groups remaining: ${referencedPlan.validation.remaining_cross_split_components ?? 'not reported'}.` : 'Independent validation has not run. Remaining crossings are not yet verified.'}</p><p>Source data stays unchanged. Approval remains a separate human decision.</p></> : <p>{planReadError ? 'The referenced plan could not be loaded. Open repair review to retry; its impact and remaining risks are unavailable here.' : 'Loading the referenced plan and its actual validation scope…'}</p>}</div>}
           <details className="decision-details"><summary>Read the agent’s explanation and evidence</summary><div className="decision-details-body"><h5>Agent summary</h5><p>{decision.summary}</p><h5>Scope statement</h5><p>{decision.scope_statement}</p>{decision.reasons.length > 0 && <><h5>Reasons</h5><ul>{decision.reasons.map((reason, index) => <li key={`${index}-${reason}`}>{reason}</li>)}</ul></>}<div className="evidence-reference-row"><div><span>Component IDs ({decision.component_ids.length})</span>{decision.component_ids.length ? decision.component_ids.map(value => <code className="mono" key={value}>{value}</code>) : <small>None cited</small>}</div><div><span>Evidence IDs ({decision.evidence_ids.length})</span>{decision.evidence_ids.length ? decision.evidence_ids.map(value => <code className="mono" key={value}>{value}</code>) : <small>None cited</small>}</div></div></div></details>
         </div>}
       </section>

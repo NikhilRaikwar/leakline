@@ -2,13 +2,15 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { api, type Run } from '../lib/api';
+import { api, type Run, type ComponentDetail } from '../lib/api';
+import RelationshipIllustration from './relationship-illustration';
 import { Arrow } from './ui';
 
 const savedAuditId = '300f5981-b6f2-4c01-b3e8-8b772063b455';
 
 export default function ProductPreview() {
   const [run, setRun] = useState<Run | null>(null);
+  const [components, setComponents] = useState<ComponentDetail[]>([]);
   const [state, setState] = useState<'loading' | 'ready' | 'unavailable'>('loading');
   useEffect(() => {
     const controller = new AbortController();
@@ -17,6 +19,15 @@ export default function ProductPreview() {
       .catch(error => { if (!(error instanceof DOMException && error.name === 'AbortError')) setState('unavailable'); });
     return () => controller.abort();
   }, []);
+
+  useEffect(() => {
+    if (!run?.result) return;
+    const controller = new AbortController();
+    const groups = run.result.components.filter(group => group.sample_ids.length > 1).slice(0, 6);
+    Promise.all(groups.map(group => api<ComponentDetail>(`/api/v1/runs/${run.analysis_id}/components/${group.component_key}`, undefined, controller.signal)))
+      .then(setComponents).catch(() => setComponents([]));
+    return () => controller.abort();
+  }, [run]);
 
   const result = run?.result ?? null;
   const coverageRows = result ? Object.entries(result.source.splits) : [];
@@ -36,12 +47,12 @@ export default function ProductPreview() {
               <div className="preview-summary"><span>Confirmed edges</span><strong className="mono">{result.accepted_edges}</strong></div><div className="preview-summary"><span>Cross-split groups</span><strong className="mono">{groups.length}</strong></div><p className="preview-caveat">Findings apply only to these inspected rows.</p>
             </section>
             <section className="preview-graph"><div className="preview-section-head"><h3>Connected components</h3><span><i className="split-dot train" /> Training <i className="split-dot test" /> Test</span></div>
-              {groups.length ? <div className="component-list">{groups.slice(0, 3).map((group, index) => <div className="component-row" key={group.component_key}><span className="component-index mono">{String(index + 1).padStart(2, '0')}</span><span className="component-key mono">{group.component_key.slice(0, 16)}…</span><span className="component-members">{group.sample_ids.length} samples</span><div className="component-splits">{group.splits.map(split => <span className={`split-tag split-${split}`} key={split}>{split}</span>)}</div></div>)}</div> : <p className="preview-empty">No confirmed cross-split groups in this analyzed scope.</p>}
+              <RelationshipIllustration components={components} />{groups.length ? <div className="component-list">{groups.slice(0, 3).map((group, index) => <div className="component-row" key={group.component_key}><span className="component-index mono">{String(index + 1).padStart(2, '0')}</span><span className="component-key mono">{group.component_key.slice(0, 16)}…</span><span className="component-members">{group.sample_ids.length} samples</span><div className="component-splits">{group.splits.map(split => <span className={`split-tag split-${split}`} key={split}>{split}</span>)}</div></div>)}</div> : <p className="preview-empty">No confirmed cross-split groups in this analyzed scope.</p>}
               <div className="preview-evidence"><span>Evidence retained per relationship</span><span className="mono">{exactPairs.length} confirmed pair records</span></div>
             </section>
           </div>
           <div className="preview-footnote"><span>Google Research · GoEmotions · public source</span>{run && <Link href={`/app/runs/${run.analysis_id}`}>Open this saved audit <Arrow /></Link>}</div>
-        </> : <div className="preview-unavailable"><span className="preview-empty-mark">↗</span><div><h3>{state === 'loading' ? 'Reading a stored run' : 'Connect your local backend to see real findings'}</h3><p>{state === 'loading' ? 'This request does not trigger a new audit or an AI investigation.' : 'No preview data is substituted here. Start the API and open the saved GoEmotions run, or create an audit of your own.'}</p></div><Link href="/app/new" className="btn-secondary">Start a new audit <Arrow /></Link></div>}
+        </> : <div className="preview-offline-layout"><RelationshipIllustration /><div className="preview-unavailable"><span className="preview-empty-mark">↗</span><div><h3>{state === 'loading' ? 'Reading a stored run' : 'Connect your local backend to see real findings'}</h3><p>{state === 'loading' ? 'This request does not trigger a new audit or an AI investigation.' : 'No preview data is substituted here. Start the API and open the saved GoEmotions run, or create an audit of your own.'}</p></div><Link href="/app/new" className="btn-secondary">Start a new audit <Arrow /></Link></div></div>}
       </div>
     </div>
   </div>;

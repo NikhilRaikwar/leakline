@@ -32,7 +32,7 @@ export default function WorkspaceHome() {
   }
 
   return <div className="overview-page">
-    <div className="workspace-page-heading"><div><p className="eyebrow">Dataset integrity workspace</p><h1>Welcome to Leakline.</h1><p>Start with a pinned source revision. Follow the evidence through FalkorDB, then review any proposed changes.</p></div><Link className="btn-primary" href="/app/new">Start a dataset audit <Arrow /></Link></div>
+    <div className="workspace-page-heading"><div><p className="eyebrow">Overview</p><h1>Dataset integrity at a glance.</h1><p>Start with a pinned source revision. Follow the evidence through FalkorDB, then review any proposed changes.</p></div><Link className="btn-primary" href="/app/new">Start a dataset audit <Arrow /></Link></div>
     <section className="welcome-band"><div><span className="welcome-rule" /><div><h2>One connected view of your evaluation data.</h2><p>Inspect public Hugging Face splits, find accepted duplicate relationships, and verify a repair manifest without modifying the source.</p></div></div><div className="welcome-meta"><StatusPill tone="good">FalkorDB-backed</StatusPill><span>Local single-user workspace</span></div></section>
     {error && <PageError>{error}</PageError>}
     <section className="recent-section"><div className="section-row"><div><p className="eyebrow">Your browser history</p><h2>Recent audits</h2><p>Run IDs are stored in this browser only; the backend has no shared history-list endpoint.</p></div><Link href="/app/audit-runs" className="text-link">View local history <Arrow /></Link></div>

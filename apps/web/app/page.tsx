@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import MarketingNav from '../components/marketing-nav';
+import RelationshipIllustration from '../components/relationship-illustration';
 import ProductPreview from '../components/product-preview';
 import MotionProvider from '../components/motion-provider';
 import { Arrow, Check, SectionHeading, Wordmark } from '../components/ui';
@@ -35,11 +36,7 @@ function MiniSplitDiagram() {
 }
 
 function MiniComponentDiagram() {
-  return <div className="mini-component-diagram" aria-label="Conceptual multi-hop relationship illustration">
-    <span className="mini-edge edge-one" /><span className="mini-edge edge-two" />
-    <i className="node node-a" /><i className="node node-b" /><i className="node node-c" />
-    <span className="mini-node-label">accepted edges</span>
-  </div>;
+  return <RelationshipIllustration />;
 }
 
 export default function Home() {
@@ -47,10 +44,11 @@ export default function Home() {
     <MarketingNav />
     <section className="hero-section page-shell" aria-labelledby="hero-title">
       <p className="eyebrow">Dataset integrity for AI engineers</p>
-      <h1 id="hero-title" className="editorial-heading">Your model’s evaluation<br className="hero-break" /> deserves a second look.</h1>
-      <p className="hero-copy">Detect hidden train/test overlap, trace connected samples, and create a leakage-audited evaluation split.</p>
+      <h1 id="hero-title" className="editorial-heading">Your model’s evaluation <br />deserves a second look.</h1>
+      <p className="hero-copy">Detect hidden train/test overlap, trace connected samples, <br />and create a leakage-audited evaluation split.</p>
       <div className="hero-actions"><Link className="btn-primary" href="/app/new">Audit a dataset <Arrow /></Link><a className="btn-secondary" href="#how-it-works">See how it works <Arrow /></a></div>
       <div className="trust-notes"><span><Check /> Public datasets</span><span><Check /> Evidence-backed</span><span><Check /> Reproducible</span></div>
+
     </section>
 
     <section id="product" data-reveal className="product-showcase page-shell" aria-label="Live Leakline product preview">
@@ -86,7 +84,7 @@ export default function Home() {
       <div className="page-shell">
         <SectionHeading align="center" title="Understand every flagged relationship." description="Open a real component to inspect sample IDs, split membership, accepted pair evidence, and a graph-returned path." />
         <div className="evidence-layout">
-          <div className="evidence-graph-card surface"><div className="panel-topline"><strong>Connected component</strong><span className="status-pill"><span className="status-dot ok" />Confirmed relationship</span></div><MiniComponentDiagram /><p>Each displayed edge is backed by an accepted duplicate relationship. Candidate-only similarities do not join WCC components.</p></div>
+          <div className="evidence-graph-card surface"><div className="panel-topline"><strong>Connected component</strong><span className="status-pill"><span className="status-dot ok" />Train · Test</span></div><MiniComponentDiagram /><p>Follow a sample through its connected group. Open an audit to inspect the actual relationships and their evidence.</p></div>
           <div className="evidence-copy"><p className="eyebrow">Inspectable by design</p><h3 className="editorial-heading">A finding comes with its trail.</h3><p>Read the source splits, evidence method, verified score and threshold, component ID, and actual bounded path returned by FalkorDB.</p><ul className="evidence-list"><li><Check /> Stable sample IDs and row indices</li><li><Check /> Confirmed pair evidence kept separate from candidates</li><li><Check /> Source revision and analyzed coverage</li><li><Check /> Multi-hop connected-component membership</li></ul><Link href="/app" className="text-link">Open the workspace <Arrow /></Link></div>
         </div>
       </div>
@@ -117,6 +115,6 @@ export default function Home() {
 
     <section data-reveal className="final-cta"><div className="page-shell"><p className="eyebrow">Start with the evidence</p><h2 className="editorial-heading">Know what’s connected before you trust your score.</h2><p>Audit a public dataset revision and inspect the rows and relationships behind each finding.</p><Link className="btn-primary" href="/app/new">Audit your dataset <Arrow /></Link></div></section>
 
-    <footer className="marketing-footer"><div className="page-shell footer-inner"><div><Wordmark /><p>Dataset integrity for more trustworthy AI evaluations.</p></div><nav aria-label="Footer"><a href="#product">Product</a><a href="https://github.com/NikhilRaikwar/leakline/tree/main/docs" target="_blank" rel="noreferrer">Docs</a><a href="https://github.com/NikhilRaikwar/leakline" target="_blank" rel="noreferrer">GitHub</a><a href="https://github.com/NikhilRaikwar/leakline/blob/main/docs/algorithms.md" target="_blank" rel="noreferrer">Methodology</a><a href="https://github.com/NikhilRaikwar/leakline/blob/main/docs/submission-readiness.md" target="_blank" rel="noreferrer">Privacy & scope</a></nav><span className="footer-note">Local-first analysis · Original datasets remain unchanged</span></div></footer>
+    <footer className="marketing-footer"><div className="page-shell footer-inner"><div><Wordmark /><p>Dataset integrity for more trustworthy AI evaluations.</p></div><nav aria-label="Footer"><a href="#product">Product</a><a href="https://github.com/NikhilRaikwar/leakline/tree/main/docs" target="_blank" rel="noreferrer">Docs</a><a href="https://github.com/NikhilRaikwar/leakline" target="_blank" rel="noreferrer">GitHub</a><a href="https://github.com/NikhilRaikwar/leakline/blob/main/docs/algorithms.md" target="_blank" rel="noreferrer">Methodology</a></nav><span className="footer-note">Local-first analysis · Original datasets remain unchanged</span></div></footer>
   </main></MotionProvider>;
 }

@@ -1,0 +1,70 @@
+{
+  "analysis_id": "300f5981-b6f2-4c01-b3e8-8b772063b455",
+  "request": {
+    "dataset": "google-research-datasets/go_emotions",
+    "config": "simplified",
+    "revision": "add492243ff905527e67aeb8b80c082af02207c3",
+    "text_column": "text",
+    "label_column": "labels",
+    "train_splits": ["train"],
+    "evaluation_splits": ["validation", "test"],
+    "limit_per_split": 1500,
+    "seed": 42,
+    "threshold": 0.9
+  },
+  "source": {
+    "dataset_id": "google-research-datasets/go_emotions",
+    "revision_sha": "add492243ff905527e67aeb8b80c082af02207c3",
+    "config": "simplified",
+    "license": "apache-2.0",
+    "full_source_split_sizes": {"train": 43410, "validation": 5426, "test": 5427}
+  },
+  "scope": {
+    "inspected_counts": {"train": 1500, "validation": 1500, "test": 1500},
+    "analyzed_samples": 4500,
+    "coverage": {
+      "train": 0.03455425017277125,
+      "validation": 0.27644673792849245,
+      "test": 0.2763957987838585
+    },
+    "seed": 42,
+    "near_duplicate_threshold": 0.9,
+    "accepted_edges": 7,
+    "non_singleton_components": 5,
+    "cross_split_components": 3,
+    "crossings": {"train_test": 2, "train_validation": 1, "validation_test": 0},
+    "cross_split_components": [
+      {"component_key":"c45dcb0a4a2954adf0cfd5e8bf6685bca1ed88395464176ca182844989fc6bfd","sample_ids":["afd01a66feee4632ee6fc64923b2ab7b6c142c0be844674f17047be16fb336c4","f427226c4e3dd7533aba22fb4b2ba7016d5544302e2cf5bf4e15dc32eb09d4e0"],"splits":["test","train"]},
+      {"component_key":"e3d80046e709acec947092d55e2c8c2b69166355fbe37c8913e03012c1b6b225","sample_ids":["12cadfb149911ebab20be92647e75133ffc9f5b42885f2601a2eb74f4388914b","bf1e45204262463f66ab27a3fbd3c99e5843b2e3748065d64649e6786be5d87f"],"splits":["test","train"]},
+      {"component_key":"e50ddfa103c9ba06770dc2b71abfe23ac39f75e3230ffd9fa073bbe1f7910342","sample_ids":["3c01752b1554c9b5d1644149907cb746c5ef31be311dd6fd64424ca7470c7463","7d9a6ae1e99e0e90084a06b8266a2d21e32c9ad86abadb51a8c1687dcb28b0db","940d08e964e19c301adf7203ffb69ace9b7d29c532db9680a9691a1f4af5566e"],"splits":["train","validation"]}
+    ],
+    "confirmed_evidence": [
+      {"pair_id":"a64c3421c648a6f96b5e688e106347cbc6f9401ccd6570b2fd3b56944ef6a4e4","a":"3c01752b1554c9b5d1644149907cb746c5ef31be311dd6fd64424ca7470c7463","b":"940d08e964e19c301adf7203ffb69ace9b7d29c532db9680a9691a1f4af5566e","method":"exact_sha256","score":1.0,"threshold":1.0,"status":"confirmed"},
+      {"pair_id":"c56601ad58610516c4fa217d2c9659e46385859dafc9d5da5d7a58049921c493","a":"3c01752b1554c9b5d1644149907cb746c5ef31be311dd6fd64424ca7470c7463","b":"7d9a6ae1e99e0e90084a06b8266a2d21e32c9ad86abadb51a8c1687dcb28b0db","method":"exact_sha256","score":1.0,"threshold":1.0,"status":"confirmed"},
+      {"pair_id":"442e8e518b75eb02e331935d5e901304dd9a3d708bb2e2e19b62210a96d860ce","a":"7d9a6ae1e99e0e90084a06b8266a2d21e32c9ad86abadb51a8c1687dcb28b0db","b":"940d08e964e19c301adf7203ffb69ace9b7d29c532db9680a9691a1f4af5566e","method":"exact_sha256","score":1.0,"threshold":1.0,"status":"confirmed"},
+      {"pair_id":"a84b49c01880bf96fc3ed5770be81e844ec110c3f897078465ecf04e6a117c99","a":"c954a882b7f6c6d68d290ff4fb7dec83e9caa84e6f269dd2aad92a0015e2c797","b":"fc5a2648a236e784b538eaadd66af552c02e7385428f8975d32c672c64149a57","method":"exact_sha256","score":1.0,"threshold":1.0,"status":"confirmed"},
+      {"pair_id":"56ebce8f4fafebf4f2f909a37cf0d9737ec97a5514b93a594dbcdd3f2b13510f","a":"12cadfb149911ebab20be92647e75133ffc9f5b42885f2601a2eb74f4388914b","b":"bf1e45204262463f66ab27a3fbd3c99e5843b2e3748065d64649e6786be5d87f","method":"exact_sha256","score":1.0,"threshold":1.0,"status":"confirmed"},
+      {"pair_id":"c7d8c333de8cc4dae89c60747984c276c6ed073624a86c4efadb8e076c08a944","a":"afd01a66feee4632ee6fc64923b2ab7b6c142c0be844674f17047be16fb336c4","b":"f427226c4e3dd7533aba22fb4b2ba7016d5544302e2cf5bf4e15dc32eb09d4e0","method":"exact_sha256","score":1.0,"threshold":1.0,"status":"confirmed"},
+      {"pair_id":"64676396b7e6cf7d470c88862688b0f033fdd8cd639cff39c3909df8944aab7e","a":"045d6ceee81dcc3de553f2e4b626cf1079faa34304bd25a6008f9af0570b51b4","b":"3b540c2d6de2979a23cde59832146ef819dfb4595d95aac8ac77ce40e1b5806e","method":"exact_sha256","score":1.0,"threshold":1.0,"status":"confirmed"}
+    ]
+  },
+  "repair_demonstration": {
+    "policy": "preserve_test",
+    "status": "verified_and_user_approved_in_browser_smoke",
+    "quarantined_inspected_train_rows": 2,
+    "after_counts": {"train": 1498, "validation": 1500, "test": 1500},
+    "independent_wcc_verification": "verified",
+    "disclosed_residual": "The one train-validation crossing remains outside Policy A's protected test boundary."
+  },
+  "reproducibility": {
+    "recorded_run_id": "300f5981-b6f2-4c01-b3e8-8b772063b455",
+    "reproduce_command": "uv run python scripts/reproduce_real_audit.py",
+    "comparison": "Pinned source revision, scoped coverage, sample components, accepted evidence and cross-split findings are compared against the recorded reference.",
+    "raw_sample_text_included": false
+  },
+  "limits": [
+    "This is a seeded partial analysis of 1,500 rows per split, not a full-dataset certification.",
+    "MinHash candidate generation may miss duplicates; findings cover accepted edges verified at the recorded threshold.",
+    "The audit checks text matching and does not prove the absence of all forms of leakage or memorization."
+  ]
+}

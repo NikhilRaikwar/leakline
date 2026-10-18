@@ -2,7 +2,7 @@ import hashlib
 import pytest
 from leakline.models import Sample
 from leakline.matching import normalize, match, shingles
-from leakline.ingest import dataset_id
+from leakline.ingest import dataset_id, label_value
 
 
 def sample(id, text, split="train", label="0"):
@@ -43,3 +43,10 @@ def test_reject_source(url):
 
 def test_source_url():
     assert dataset_id("https://huggingface.co/datasets/owner/name") == "owner/name"
+
+
+def test_missing_and_multilabel_source_values():
+    assert label_value({"label":None},"label") is None
+    assert label_value({"label":[2,1,2]},"label")=="[1, 2]"
+    with pytest.raises(ValueError):
+        label_value({"label":{"not":"a class"}},"label")

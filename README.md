@@ -1,9 +1,10 @@
-# Leakline — Phase 1
+# Leakline — Phase 2
 
 Backend-first public text dataset audit for Graph Hacks Track 01. This checkpoint
 implements deterministic source ingestion, evidence matching and real FalkorDB
-connected components. The only web surface is `/app`. Agent/MCP, repairs,
-evaluation, exports and a full landing page belong to later phases and are absent.
+connected components, graph-derived repair planning, independent verification and
+approval-gated artifact downloads. The web surface remains `/app`. Agent/MCP,
+model evaluation, semantic embeddings and a full landing page are not implemented.
 
 ## Run locally
 
@@ -24,7 +25,7 @@ FalkorDB uses localhost:6380 and its Browser uses http://localhost:3001.
 Versions are pinned in uv.lock/package-lock.json and the database image digest.
 Optional environment names are in `.env.example`; configure shell environment
 or `.env.local` for Next.js. Python does not automatically load `.env` files.
-No model API key is needed for deterministic Phase 1.
+No model API key is needed for these deterministic phases.
 
 ```powershell
 uv run pytest -v
@@ -49,6 +50,43 @@ own randomly named graphs. Live API tests retain their audit graph and local run
 - `GET /api/v1/runs/{id}`: persisted typed status, events, provenance, coverage,
   graph components, pair evidence, executed queries and raw findings.
 - `GET /api/v1/runs/{id}/findings`: complete findings, or 409 before completion.
+- `GET /api/v1/runs/{id}/components/{component_key}`: original excerpts, row IDs,
+  evidence and an actual bounded FalkorDB path.
+- `POST /api/v1/runs/{id}/repair-plans`: draft using fresh database WCC.
+- `GET /api/v1/runs/{id}/repair-plans`: reload persisted plans.
+- `GET /api/v1/runs/{id}/repair-plans/{plan_id}`: inspect assignments and warnings.
+- `POST .../{plan_id}/validate`: independent graph and assignment verification.
+- `POST .../{plan_id}/approve`: prior successful validation and explicit
+  `{ "approve": true, "manifest_sha256": "<reviewed checksum>" }`; verifies again.
+- `GET .../{plan_id}/artifacts`: four files with byte sizes and SHA-256 hashes.
+- `GET .../{plan_id}/artifacts/{filename}`: controlled, approval-gated download.
+
+Full contracts, policy semantics and transitions: [API documentation](docs/api.md).
+
+## Real Phase 2 example
+
+The fixed GoEmotions `simplified` audit at commit
+`add492243ff905527e67aeb8b80c082af02207c3` inspected **1,500 rows each** from train,
+validation and test (4,500 total; seed 42; near threshold .90). It found 7 accepted
+edges in 5 non-singleton components: two train–test groups and one train–validation
+group. This is a partial-scope result, not a statement about the whole dataset.
+The source card lists Apache-2.0; only text-free evidence/provenance is committed.
+GoEmotions has multilabel class IDs: class counts are marginal per-class counts,
+not the number of unique label combinations. Source usernames are not imported.
+
+Reproduce this audit with `uv run python scripts/find_real_audit.py`.
+It records a new server-generated run ID and measured report. Inspect the local
+recorded run at `/app?run=300f5981-b6f2-4c01-b3e8-8b772063b455` on this machine;
+fresh checkouts must reproduce the audit because raw graphs are not committed.
+Select Policy A, create a plan, run independent verification, review the changes,
+explicitly approve and load the four downloads. The test-preserving plan quarantines
+two inspected train rows. One train–validation component remains disclosed outside
+the protected test boundary. Alternative splitting can refuse conflicting label
+sets rather than silently resolve annotations.
+
+The [measured analysis](docs/real-analysis-report.json),
+[search receipts](docs/dataset-search.json) and
+[verification report](docs/phase-2-verification.md) document the evidence.
 
 Examples of source inputs (no pre-written outcome):
 `cornell-movie-review-data/rotten_tomatoes` (card license unknown),
@@ -63,10 +101,11 @@ commit with remote dataset code disabled and anonymous access (`token=False`).
 Only public, ungated datasets with actual split counts and string text are supported.
 Per-split seeded index sampling records original row IDs; coverage of unselected
 splits is zero. Runs allow at most 5,000 analyzed rows, 100,000 characters per row,
-and 100,000 evidence pairs. Streaming may read a large portion of a source to reach selected
+100,000 evidence pairs and 10 million total analyzed characters. Streaming may read a large portion of a source to reach selected
 indices; the row cap bounds analysis size, not network bytes. Large datasets should
 be avoided in this local MVP. Public availability does not grant redistribution rights.
-Raw samples are stored locally in FalkorDB; no public text export is implemented.
+Raw samples are stored locally in FalkorDB. Repair downloads reference source row
+IDs and hashes and do not contain full sample text. The original remains read-only.
 
 This is a **local single-user** app: bind API/web/database to loopback. No hosted
 authentication or tenant authorization is implemented. One API worker only; SQLite

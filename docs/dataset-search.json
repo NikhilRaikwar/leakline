@@ -1,0 +1,106 @@
+[
+  {
+    "analysis_id": "6701aa8a-bbd5-4666-a96f-68e1fa6daace",
+    "request": {
+      "dataset": "cardiffnlp/tweet_eval",
+      "config": "sentiment",
+      "revision": "b3a375baf0f409c77e6bc7aa35102b7b3534f8be",
+      "text_column": "text",
+      "label_column": "label",
+      "train_splits": [
+        "train"
+      ],
+      "evaluation_splits": [
+        "validation",
+        "test"
+      ],
+      "limit_per_split": 1500,
+      "seed": 42,
+      "threshold": 0.9
+    },
+    "source": {
+      "dataset_id": "cardiffnlp/tweet_eval",
+      "revision_sha": "b3a375baf0f409c77e6bc7aa35102b7b3534f8be",
+      "config": "sentiment",
+      "configs": [
+        "emoji",
+        "emotion",
+        "hate",
+        "irony",
+        "offensive",
+        "sentiment",
+        "stance_abortion",
+        "stance_atheism",
+        "stance_climate",
+        "stance_feminist",
+        "stance_hillary"
+      ],
+      "splits": {
+        "train": 45615,
+        "test": 12284,
+        "validation": 2000
+      },
+      "columns": {
+        "text": "Value(dtype='string', id=None)",
+        "label": "ClassLabel(names=['negative', 'neutral', 'positive'], id=None)"
+      },
+      "license": "unknown"
+    },
+    "coverage": {
+      "train": 0.03288391976323578,
+      "test": 0.12211006186909801,
+      "validation": 0.75
+    },
+    "rows": 4500,
+    "accepted_edges": 1,
+    "cross_split_components": 0
+  },
+  {
+    "analysis_id": "300f5981-b6f2-4c01-b3e8-8b772063b455",
+    "request": {
+      "dataset": "google-research-datasets/go_emotions",
+      "config": "simplified",
+      "revision": "add492243ff905527e67aeb8b80c082af02207c3",
+      "text_column": "text",
+      "label_column": "labels",
+      "train_splits": [
+        "train"
+      ],
+      "evaluation_splits": [
+        "validation",
+        "test"
+      ],
+      "limit_per_split": 1500,
+      "seed": 42,
+      "threshold": 0.9
+    },
+    "source": {
+      "dataset_id": "google-research-datasets/go_emotions",
+      "revision_sha": "add492243ff905527e67aeb8b80c082af02207c3",
+      "config": "simplified",
+      "configs": [
+        "raw",
+        "simplified"
+      ],
+      "splits": {
+        "train": 43410,
+        "validation": 5426,
+        "test": 5427
+      },
+      "columns": {
+        "text": "Value(dtype='string', id=None)",
+        "labels": "Sequence(feature=ClassLabel(names=['admiration', 'amusement', 'anger', 'annoyance', 'approval', 'caring', 'confusion', 'curiosity', 'desire', 'disappointment', 'disapproval', 'disgust', 'embarrassment', 'excitement', 'fear', 'gratitude', 'grief', 'joy', 'love', 'nervousness', 'optimism', 'pride', 'realization', 'relief', 'remorse', 'sadness', 'surprise', 'neutral'], id=None), length=-1, id=None)",
+        "id": "Value(dtype='string', id=None)"
+      },
+      "license": "apache-2.0"
+    },
+    "coverage": {
+      "train": 0.03455425017277125,
+      "validation": 0.27644673792849245,
+      "test": 0.2763957987838585
+    },
+    "rows": 4500,
+    "accepted_edges": 7,
+    "cross_split_components": 3
+  }
+]

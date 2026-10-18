@@ -1,4 +1,4 @@
-# Phase 1 database contract
+# Implemented database algorithms
 
 Server: FalkorDB 6.0.2 (module 60002), image pinned by digest in compose.
 The running server has executed the following query successfully. Integration tests
@@ -40,3 +40,34 @@ no claim of exhaustive near-duplicate detection is made.
 
 Source documentation: [FalkorDB WCC](https://docs.falkordb.com/algorithms/wcc),
 [HF revision loading](https://huggingface.co/docs/datasets/en/loading).
+
+## Phase 2: fresh verification and evidence paths
+
+`snapshot.py` runs the same real `algo.wcc` query on every planning and independent
+verification request. It reads source, Sample, Split, PairEvidence and confirmed
+edge properties afresh and rejects scope mismatches, orphan evidence, truncated
+database result sets or edge-policy mismatches. Grouping returned component IDs
+is not a local connectivity algorithm. `validator.py` checks assignments against
+these returned groups and repeats the snapshot read to detect concurrent change.
+No NetworkX or other Python connected-component implementation is used in production.
+
+The following bounded path query is tested on the installed server, including a
+three-node transitive fixture with two actual returned evidence IDs:
+
+```cypher
+MATCH p=(a:Sample {sample_id:$source})
+  -[:CONFIRMED_DUPLICATE_OF*1..8]-(b:Sample {sample_id:$target})
+RETURN [n IN nodes(p) | n.sample_id], [r IN relationships(p) | r.pair_id]
+LIMIT 1
+```
+
+Only the returned path is displayed. An eight-hop display limit does not limit WCC
+computation or imply that longer components are disconnected. WCC and path queries
+have been exercised by real FalkorDB integration tests, not inferred from syntax.
+
+Policy B uses deterministic, bounded component assignment, not a second graph
+algorithm: 16 seed-derived attempts reserve components for required class coverage,
+then greedily balance squared size and marginal-label errors. Hard fraction/count
+constraints are independently checked. A heuristic failure is reported as no
+feasible assignment found, rather than an unsupported proof of mathematical
+infeasibility. Full semantics: [API contract](api.md).

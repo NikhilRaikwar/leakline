@@ -70,6 +70,8 @@ class Graph:
             crosses = bool(set(splits) & set(train) and set(splits) & set(evaluation))
             component = Component(component_key=key,sample_ids=ids,splits=splits,crosses_boundary=crosses)
             components.append(component)
+        # Replace stale materialization when accepted relationships have changed.
+        self.query("MATCH (c:Component) DETACH DELETE c")
         for start in range(0,len(components),200):
             batch = [c.model_dump() for c in components[start:start+200]]
             self.query("UNWIND $rows AS row MERGE (c:Component {component_key:row.component_key}) "

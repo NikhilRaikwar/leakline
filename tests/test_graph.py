@@ -55,3 +55,14 @@ def test_database_outage_has_no_local_algorithm_fallback(monkeypatch):
     monkeypatch.setenv("FALKORDB_PORT","1")
     with pytest.raises(Exception):
         Graph("leakline_unreachable").components(["train"],["test"])
+
+
+def test_recompute_removes_stale_materialized_components(graph):
+    graph.store(source(),[sample("a","A"),sample("b","B"),sample("c","C","test"),sample("d","D")],[edge("a","b"),edge("b","c")])
+    _,findings=graph.components(["train"],["test"])
+    assert findings
+    graph.query("MATCH (:Sample {sample_id:'b'})-[r:CONFIRMED_DUPLICATE_OF]->(:Sample {sample_id:'c'}) DELETE r")
+    graph.query("MATCH (e:PairEvidence {pair_id:'bc'}) SET e.status='needs_review'")
+    components,findings=graph.components(["train"],["test"])
+    assert not findings and sorted(len(c.sample_ids) for c in components)==[1,1,2]
+    assert graph.query("MATCH (c:Component) RETURN count(c)")==[[3]]

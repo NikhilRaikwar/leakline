@@ -1,8 +1,9 @@
 'use client';
 import {useEffect,useState} from 'react';
+import RepairPanel, {type AuditResult} from './repair-panel';
 
 type Source={dataset_id:string;revision_sha:string;config:string;configs:string[];splits:Record<string,number>;columns:Record<string,string>;license:string};
-type Run={analysis_id:string;status:string;events:string[];error:string|null;result:Record<string,unknown>|null};
+type Run={analysis_id:string;status:string;events:string[];error:string|null;result:AuditResult|null};
 
 async function api(path:string,body?:unknown){
   const response=await fetch(path,body?{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}:{cache:'no-store'});
@@ -23,7 +24,7 @@ export default function Audit(){
   const [run,setRun]=useState<Run|null>(null);
   const [busy,setBusy]=useState(false);
   const [error,setError]=useState('');
-  useEffect(()=>{const id=localStorage.getItem('leakline_run');if(id)api(`/api/v1/runs/${id}`).then(setRun).catch(e=>setError(e.message));},[]);
+  useEffect(()=>{const id=new URLSearchParams(window.location.search).get('run')||localStorage.getItem('leakline_run');if(id)api(`/api/v1/runs/${encodeURIComponent(id)}`).then(r=>{setRun(r);localStorage.setItem('leakline_run',id);}).catch(e=>setError(e.message));},[]);
   const active=run && !['complete','failed','interrupted'].includes(run.status);
   const report=run?.result?Object.fromEntries(Object.entries(run.result).filter(([key])=>key!=='components')):null;
   useEffect(()=>{
@@ -33,7 +34,14 @@ export default function Audit(){
   },[active,run?.analysis_id]);
   async function inspect(){
     setBusy(true);setError('');setSource(null);
-    try {const s=await api('/api/v1/datasets/inspect',{dataset,config:config||null});setSource(s);}
+    try {
+      const s=await api('/api/v1/datasets/inspect',{dataset,config:config||null});setSource(s);
+      setText('text' in s.columns?'text':'sentence' in s.columns?'sentence':Object.keys(s.columns)[0]);
+      setLabel('label' in s.columns?'label':'labels' in s.columns?'labels':'');
+      const training='train' in s.splits?'train':Object.keys(s.splits)[0];setTrain(training);
+      const evaluation=['validation','test'].filter(name=>name in s.splits && name!==training);
+      setEvaluation((evaluation.length?evaluation:Object.keys(s.splits).filter(name=>name!==training)).join(','));
+    }
     catch(e){setError((e as Error).message);}finally{setBusy(false);}
   }
   async function start(){
@@ -45,7 +53,7 @@ export default function Audit(){
     }catch(e){setError((e as Error).message);}finally{setBusy(false);}
   }
   return <main className="max-w-4xl mx-auto p-6 md:p-12">
-    <p className="text-sm tracking-widest mb-6">LEAKLINE / PHASE 1</p>
+    <p className="text-sm tracking-widest mb-6">LEAKLINE / PHASE 2</p>
     <h1 className="text-3xl font-semibold mb-3">Audit a public text dataset</h1>
     <p>Real source rows → deterministic evidence → FalkorDB connected components.</p>
     <p className="text-sm mt-3 text-gray-600">Partial coverage can miss duplicates. A clean result applies only to the audited scope. Original datasets remain unchanged.</p>
@@ -73,6 +81,7 @@ export default function Audit(){
       <p className="break-all text-sm my-2">{run.analysis_id}</p>
       <p>{run.events.join(' → ')}</p>
       {run.error&&<p role="alert">{run.error}</p>}
+      {run.status==='complete'&&run.result&&<RepairPanel key={run.analysis_id} runId={run.analysis_id} result={run.result}/>}
       <h3 className="font-semibold mt-6 mb-2">Raw findings and provenance</h3>
       <pre className="bg-white border border-gray-200 p-4 rounded">{report?JSON.stringify(report,null,2):'Results are not available yet.'}</pre>
       {run.result&&<p className="text-sm mt-3">Complete component membership is available in the <a className="underline" href={`/api/v1/runs/${run.analysis_id}`}>run JSON</a>.</p>}

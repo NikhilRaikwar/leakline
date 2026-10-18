@@ -19,8 +19,16 @@ executor = ThreadPoolExecutor(max_workers=1)
 log = logging.getLogger(__name__)
 
 
+class ClosingConnection(sqlite3.Connection):
+    def __exit__(self,*args):
+        try:
+            return super().__exit__(*args)
+        finally:
+            self.close()
+
+
 def connection():
-    db = sqlite3.connect(DB, timeout=30)
+    db = sqlite3.connect(DB, timeout=30, factory=ClosingConnection)
     db.execute("CREATE TABLE IF NOT EXISTS runs (id TEXT PRIMARY KEY, payload TEXT NOT NULL)")
     return db
 
@@ -59,9 +67,11 @@ def work(run):
         graph.store(source,samples,edges)
         components,findings = graph.components(run.request.train_splits,run.request.evaluation_splits)
         run.result = Result(source=source,coverage={s:sum(x.split==s for x in samples)/n for s,n in source.splits.items()},
+                            inspected_counts={s:sum(x.split==s for x in samples) for s in source.splits},
                             analyzed_samples=len(samples),accepted_edges=sum(e.status=="confirmed" for e in edges),
                             review_edges=sum(e.status=="needs_review" for e in edges),components=components,
-                            findings=findings,evidence=edges,graph_name=graph_name,queries=graph.queries)
+                            findings=findings,cross_split_components=[c for c in components if len(c.splits)>1],
+                            evidence=edges,graph_name=graph_name,queries=graph.queries)
         phase("complete")
     except Exception as exc:
         log.exception("Audit failed: %s",run.analysis_id)
@@ -71,6 +81,9 @@ def work(run):
 
 @asynccontextmanager
 async def lifespan(app):
+    global executor
+    if executor._shutdown:
+        executor = ThreadPoolExecutor(max_workers=1)
     # A killed single-process worker cannot claim an old run is still progressing.
     with connection() as db:
         rows = db.execute("SELECT payload FROM runs").fetchall()
@@ -84,7 +97,7 @@ async def lifespan(app):
     executor.shutdown(wait=True)
 
 
-app = FastAPI(title="Leakline Phase 1",version="0.1.0",lifespan=lifespan)
+app = FastAPI(title="Leakline",version="0.2.0",lifespan=lifespan)
 
 
 @app.get("/health/ready")
@@ -135,3 +148,7 @@ def findings(run_id: str):
     if run.status != "complete":
         raise HTTPException(409,"run_not_complete")
     return run.result.findings
+
+
+from .repair_api import install
+install(app,read,connection)

@@ -2,6 +2,7 @@ import hashlib
 import json
 import random
 import re
+import math
 from urllib.parse import urlparse
 from datasets import get_dataset_config_names, load_dataset_builder, load_dataset
 from huggingface_hub import HfApi
@@ -11,6 +12,17 @@ from .matching import normalize
 
 def digest(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def label_value(row,column):
+    if column is None or row[column] is None:
+        return None
+    value=row[column]
+    if isinstance(value,list) and all(type(v) is int and v>=0 for v in value):
+        return json.dumps(sorted(set(value)))
+    if isinstance(value,(str,int,bool)) or isinstance(value,float) and math.isfinite(value):
+        return str(value)
+    raise ValueError("unsupported_column: labels must be scalar classes or lists of nonnegative class IDs")
 
 
 def dataset_id(value: str) -> str:
@@ -58,6 +70,7 @@ def ingest(req: AuditRequest, source: Source) -> list[Sample]:
     if req.text_column not in source.columns or (req.label_column and req.label_column not in source.columns):
         raise ValueError("unsupported_column")
     samples = []
+    total_characters = 0
     # Seeded indices preserve original row identity. Streaming bounds memory, not download bytes.
     for split in selected:
         total = source.splits[split]
@@ -73,9 +86,12 @@ def ingest(req: AuditRequest, source: Source) -> list[Sample]:
                     raise ValueError("unsupported_column: nonempty strings required")
                 if len(text) > 100000:
                     raise ValueError("audit_budget_exceeded: maximum 100000 characters per row")
+                total_characters += len(text)
+                if total_characters > 10000000:
+                    raise ValueError("audit_budget_exceeded: maximum 10000000 analyzed characters")
                 identity = json.dumps([source.dataset_id, source.revision_sha, source.config, split, i])
                 samples.append(Sample(sample_id=digest(identity), split=split, row_index=i, text=text,
-                                      label=str(row[req.label_column]) if req.label_column else None,
+                                      label=label_value(row,req.label_column),
                                       raw_hash=digest(text), text_hash=digest(normalize(text))))
                 found += 1
             if i >= indices[-1]:

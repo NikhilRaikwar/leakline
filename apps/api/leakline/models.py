@@ -66,11 +66,13 @@ class Component(BaseModel):
 class Result(BaseModel):
     source: Source
     coverage: dict[str, float]
+    inspected_counts: dict[str, int] = Field(default_factory=dict)
     analyzed_samples: int
     accepted_edges: int
     review_edges: int
     components: list[Component]
     findings: list[Component]
+    cross_split_components: list[Component] = Field(default_factory=list)
     evidence: list[Evidence]
     graph_name: str
     queries: list[str]
